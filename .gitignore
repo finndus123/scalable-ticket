@@ -183,6 +183,9 @@ build/
 ### VS Code ###
 .vscode/
 
+## AI Agent Instructions ##
+GEMINI.md
+
 ### Some additional ignores (sort later)
 *.DS_Store
 *.sw?

@@ -22,12 +22,25 @@ This project is a private playground for learning concepts and technologies for 
 - **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
 - **Eventual Consistency:** User requests are acknowledged immediately (HTTP 202), while the actual data consistency is ensured asynchronously by the worker.
 - **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods) and an event driven architecture with a message queue.
+- **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
+
+## Folder Structure
+The backend is organized as a Maven multi-module project.
+
+- **backend:** Root folder for Spring Boot services.
+  - **ticket-api:** REST API handling HTTP requests.
+  - **ticket-worker:** Consumer for asynchronous processing.
+  - **ticket-common:** Shared library containing DTOs and utilities.
+- **k8s:** Kubernetes deployment configurations.
+  - **apps:** Manifests for application services.
+  - **infrastructure:** Manifests for system infrastructure.
 
 ## Planned ideas for the future: 
 - Kubernetes Horizontal Pod Autoscaling
 - Redis & RabbitMQ Cluster
+- Deploy on Azure with CI/CD Pipeline
 - JWT Authentication
-- Simple Frontend
+- Simple Frontend with React 
 
 ## How to start locally: 
 ```bash
