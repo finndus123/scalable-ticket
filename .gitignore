@@ -184,7 +184,11 @@ build/
 .vscode/
 
 ## AI Agent Instructions ##
+.gemini
 GEMINI.md
+
+# Local Environment Variables
+.env
 
 ### Some additional ignores (sort later)
 *.DS_Store
