@@ -6,6 +6,5 @@ package de.playground.scalable_ticketing.ticket_api.dto;
  */
 public record TicketAvailabilityResponse(
     String eventId,
-    int availableTickets,
-    String eventName
+    int availableTickets
 ) {}

@@ -21,10 +21,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: ticket-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - "${REDIS_PORT}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,5 +45,30 @@ services:
       timeout: 5s
       retries: 5
 
+  dbgate:
+    image: dbgate/dbgate:latest
+    container_name: ticket-dbgate
+    ports:
+      - "3000:3000"
+    volumes:
+      - dbgate_data:/root/.dbgate
+    environment:
+      - CONNECTIONS=con1,con2
+      - LABEL_con1=Postgres
+      - SERVER_con1=postgres
+      - USER_con1=${DB_USER}
+      - PASSWORD_con1=${DB_PASSWORD}
+      - PORT_con1=5432
+      - ENGINE_con1=postgres@dbgate-plugin-postgres
+      - LABEL_con2=Redis
+      - SERVER_con2=redis
+      - PASSWORD_con2=${REDIS_PASSWORD}
+      - PORT_con2=6379
+      - ENGINE_con2=redis@dbgate-plugin-redis
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   postgres_data:
+  dbgate_data:

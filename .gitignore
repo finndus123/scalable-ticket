@@ -183,8 +183,9 @@ build/
 ### VS Code ###
 .vscode/
 
-## AI Agent Instructions ##
+## AI Agent Instructions Gemini ##
 .gemini
+.geminiignore
 GEMINI.md
 
 # Local Environment Variables

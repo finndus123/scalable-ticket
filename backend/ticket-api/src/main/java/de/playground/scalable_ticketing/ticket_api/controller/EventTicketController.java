@@ -2,6 +2,7 @@ package de.playground.scalable_ticketing.ticket_api.controller;
 
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
+import de.playground.scalable_ticketing.ticket_api.service.EventTicketService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,16 +11,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/events")
-public class TicketController {
+@RequestMapping("/api/events")
+public class EventTicketController {
 
-    private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventTicketController.class);
+    private final EventTicketService eventTicketService;
 
-    // TODO: Inject TicketService here later
-    // private final TicketService ticketService;
-
-    public TicketController() {
-        // this.ticketService = ticketService;
+    public EventTicketController(EventTicketService eventTicketService) {
+        this.eventTicketService = eventTicketService;
     }
 
     /**
@@ -31,10 +30,7 @@ public class TicketController {
     @GetMapping("/{eventId}/tickets/availability")
     public ResponseEntity<TicketAvailabilityResponse> checkAvailability(@PathVariable String eventId) {
         logger.info("Request to check availability for event: {}", eventId);
-        
-        // Mock response for now as Service is not yet implemented
-        TicketAvailabilityResponse mockResponse = new TicketAvailabilityResponse(eventId, 100, "Mock Event Name");
-        return ResponseEntity.ok(mockResponse);
+        return ResponseEntity.ok(eventTicketService.getAvailability(eventId));
     }
 
     /**
@@ -57,8 +53,7 @@ public class TicketController {
              return ResponseEntity.badRequest().build();
         }
 
-        // TODO: Call ticketService.placeOrder(orderRequest);
-        
+        eventTicketService.placeOrder(orderRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }
