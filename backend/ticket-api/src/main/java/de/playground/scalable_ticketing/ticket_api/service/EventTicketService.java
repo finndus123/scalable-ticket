@@ -27,9 +27,9 @@ public class EventTicketService {
      * @param eventId The event ID.
      * @return Availability response.
      */
-    public TicketAvailabilityResponse getAvailability(String eventId) {
-        String cacheKey = "event:" + eventId + ":availability";
-        Object cachedValue = redisTemplate.opsForValue().get(cacheKey);
+    public TicketAvailabilityResponse getAvailabilityCount(String eventId) {
+        final String cacheKey = "event:" + eventId + ":availability";
+        final Object cachedValue = redisTemplate.opsForValue().get(cacheKey);
 
         if (cachedValue == null) {
             logger.info("Cache miss for event availability: {}", eventId);
@@ -37,7 +37,7 @@ public class EventTicketService {
             return new TicketAvailabilityResponse(eventId, 0);
         }
 
-        int availabilityCount = (Integer) cachedValue;
+        final int availabilityCount = (Integer) cachedValue;
         return new TicketAvailabilityResponse(eventId, availabilityCount);
     }
 

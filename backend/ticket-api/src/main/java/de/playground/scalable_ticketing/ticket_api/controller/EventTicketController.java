@@ -30,7 +30,7 @@ public class EventTicketController {
     @GetMapping("/{eventId}/tickets/availability")
     public ResponseEntity<TicketAvailabilityResponse> checkAvailability(@PathVariable String eventId) {
         logger.info("Request to check availability for event: {}", eventId);
-        return ResponseEntity.ok(eventTicketService.getAvailability(eventId));
+        return ResponseEntity.ok(eventTicketService.getAvailabilityCount(eventId));
     }
 
     /**
