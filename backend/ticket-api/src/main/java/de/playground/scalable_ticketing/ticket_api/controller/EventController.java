@@ -2,7 +2,7 @@ package de.playground.scalable_ticketing.ticket_api.controller;
 
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
-import de.playground.scalable_ticketing.ticket_api.service.EventTicketService;
+import de.playground.scalable_ticketing.ticket_api.service.EventService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events")
-public class EventTicketController {
+public class EventController {
 
-    private static final Logger logger = LoggerFactory.getLogger(EventTicketController.class);
-    private final EventTicketService eventTicketService;
+    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
+    private final EventService eventService;
 
-    public EventTicketController(EventTicketService eventTicketService) {
-        this.eventTicketService = eventTicketService;
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
     }
 
     /**
@@ -30,7 +30,7 @@ public class EventTicketController {
     @GetMapping("/{eventId}/tickets/availability")
     public ResponseEntity<TicketAvailabilityResponse> checkAvailability(@PathVariable String eventId) {
         logger.info("Request to check availability for event: {}", eventId);
-        return ResponseEntity.ok(eventTicketService.getAvailabilityCount(eventId));
+        return ResponseEntity.ok(eventService.getAvailabilityCount(eventId));
     }
 
     /**
@@ -53,7 +53,7 @@ public class EventTicketController {
              return ResponseEntity.badRequest().build();
         }
 
-        eventTicketService.placeOrder(orderRequest);
+        eventService.createOrder(orderRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }
