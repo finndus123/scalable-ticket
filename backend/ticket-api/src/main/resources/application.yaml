@@ -1,3 +1,9 @@
 spring:
   application:
     name: ticket-api
+
+rabbitmq:
+  exchange: ticket.exchange
+  queue: ticket.order.queue
+  routing:
+    key: ticket.order.created
