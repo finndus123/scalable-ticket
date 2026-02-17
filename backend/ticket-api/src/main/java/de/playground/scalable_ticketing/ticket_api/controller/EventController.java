@@ -36,7 +36,7 @@ public class EventController {
     /**
      * Places a ticket order.
      *
-     * @param eventId The ID of the event.
+     * @param eventId      The ID of the event.
      * @param orderRequest The order request details.
      * @return 202 Accepted if validated.
      */
@@ -44,13 +44,13 @@ public class EventController {
     public ResponseEntity<Void> placeOrder(
             @PathVariable String eventId,
             @Valid @RequestBody TicketOrderRequest orderRequest) {
-        
+
         logger.info("Request to place order for event: {}, payload: {}", eventId, orderRequest);
 
         // Path variable validation
         if (!eventId.equals(orderRequest.eventId())) {
-             logger.warn("Event ID mismatch: path={}, body={}", eventId, orderRequest.eventId());
-             return ResponseEntity.badRequest().build();
+            logger.warn("Event ID mismatch: path={}, body={}", eventId, orderRequest.eventId());
+            return ResponseEntity.badRequest().build();
         }
 
         eventService.createOrder(orderRequest);
