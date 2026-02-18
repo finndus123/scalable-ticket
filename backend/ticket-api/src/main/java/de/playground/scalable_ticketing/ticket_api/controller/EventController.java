@@ -3,15 +3,24 @@ package de.playground.scalable_ticketing.ticket_api.controller;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
 import de.playground.scalable_ticketing.ticket_api.service.EventService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events")
+@Tag(name = "Events", description = "Endpoints for querying ticket availability and placing ticket orders for events")
 public class EventController {
 
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
@@ -27,6 +36,11 @@ public class EventController {
      * @param eventId The ID of the event.
      * @return The availability details.
      */
+    @Operation(summary = "Get ticket availability", description = "Returns the number of available tickets for the given event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") })
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Availability information retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketAvailabilityResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Event not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE, schema = @Schema(type = "string")))
+    })
     @GetMapping("/{eventId}/tickets/availability")
     public ResponseEntity<TicketAvailabilityResponse> checkAvailability(@PathVariable String eventId) {
         logger.info("Request to check availability for event: {}", eventId);
@@ -40,6 +54,12 @@ public class EventController {
      * @param orderRequest The order request details.
      * @return 202 Accepted if validated.
      */
+    @Operation(summary = "Place a ticket order", description = "Places an order for a ticket for the corresponding event.",
+            parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ticket order details", required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketOrderRequest.class))))
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Order accepted and queued for processing", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid request: validation failed or event ID mismatch between path and body", content = @Content)
+    })
     @PostMapping("/{eventId}/tickets/order")
     public ResponseEntity<Void> placeOrder(
             @PathVariable String eventId,

@@ -1,16 +1,18 @@
 # Scalable Ticket System
+
 This project is a private playground for learning concepts and technologies for high-available distributed systems. It implements a cloud-native ticketing system designed to handle extreme traffic spikes through distributed processing and caching.
 
 ## Fictional Use Cases
+
 1. **Check ticket availability (High Frequency Read)**
 2. **Buy tickets (High Concurrency Write)**
-
 
 ![System Overview of the Scalable Ticket System](scalable-ticket-system-overview.png)
 
 ## Infrastructure components
+
 - **Ticket-API (3 Replicas):** Spring Boot Service (REST API) handling HTTP requests. Performs high-speed reads via Redis and publishes write-events to RabbitMQ.
-- **Ticket-Worker (2 Replicas):** Spring Boot backend consumer. Asynchronously processes orders, updates the database and invalidates the cache. 
+- **Ticket-Worker (2 Replicas):** Spring Boot backend consumer. Asynchronously processes orders, updates the database and invalidates the cache.
 - **Load Balancer:** Kubernetes Service distributing incoming traffic across API replicas using a Round-Robin strategy.
 - **Redis:** In-memory store used as a Look-Aside Cache (TTL: 10s) to reduce read-load on the database.
 - **PostgreSQL:** Primary relational database for persistent storage of ticket inventory and order transactions.
@@ -19,12 +21,14 @@ This project is a private playground for learning concepts and technologies for 
 - **Grafana:** Visualization layer connected to Prometheus to monitor system health and bottlenecks in real-time.
 
 ## Key Architectural Decisions
+
 - **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
 - **Eventual Consistency:** User requests are acknowledged immediately (HTTP 202), while the actual data consistency is ensured asynchronously by the worker.
 - **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods) and an event driven architecture with a message queue.
 - **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
 
 ## Folder Structure
+
 The backend is organized as a Maven multi-module project.
 
 - **backend:** Root folder for Spring Boot services.
@@ -35,14 +39,16 @@ The backend is organized as a Maven multi-module project.
   - **apps:** Manifests for application services.
   - **infrastructure:** Manifests for system infrastructure.
 
-## Planned ideas for the future: 
+## Planned ideas for the future:
+
 - Kubernetes Horizontal Pod Autoscaling
 - Redis & RabbitMQ Cluster
 - Deploy on Azure with CI/CD Pipeline
 - JWT Authentication
-- Simple Frontend with React 
+- Simple Frontend with React
 
-## How to start locally: 
+## How to start locally:
+
 ```bash
     TODO
 ```
