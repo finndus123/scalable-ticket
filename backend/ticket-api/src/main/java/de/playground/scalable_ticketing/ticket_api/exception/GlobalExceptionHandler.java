@@ -1,6 +1,7 @@
 package de.playground.scalable_ticketing.ticket_api.exception;
 
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,5 +25,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(eventNotFoundException.getMessage());
+    }
+
+    /**
+     * Handles ConstraintViolationException and returns a 400 Bad Request response.
+     *
+     * @param ex The exception instance.
+     * @return ResponseEntity containing the violation messages and HTTP status 400.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
     }
 }

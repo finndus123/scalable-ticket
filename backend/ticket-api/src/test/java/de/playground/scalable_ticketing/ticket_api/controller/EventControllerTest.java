@@ -1,6 +1,7 @@
 package de.playground.scalable_ticketing.ticket_api.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -37,7 +38,6 @@ class EventControllerTest {
 
     private static final String BASE_URL = "/api/events";
     private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
-    private static final String OTHER_EVENT_ID = "a3f1c847-2d6e-4b89-9f0a-1c2d3e4f5a6b";
     private static final String USER_ID = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a";
     private static final String REQUEST_ID = "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e";
 
@@ -90,6 +90,19 @@ class EventControllerTest {
 
             verify(eventService).getAvailabilityCount(EVENT_ID);
         }
+
+        @Test
+        @DisplayName("400 Bad Request — eventId is blank (@NotBlank on path variable)")
+        void shouldReturn400WhenEventIdIsBlank() throws Exception {
+            // when / then
+            // A blank segment is still a valid URL path segment, so routing succeeds,
+            // but @NotBlank triggers a ConstraintViolationException → 400.
+            mockMvc.perform(get(BASE_URL + "/{eventId}/tickets/availability", "   ")
+                    .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
+
+            verify(eventService, never()).getAvailabilityCount(any());
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -104,8 +117,8 @@ class EventControllerTest {
         @DisplayName("202 Accepted — valid request is forwarded to service")
         void shouldReturn202ForValidOrder() throws Exception {
             // given
-            TicketOrderRequest request = new TicketOrderRequest(EVENT_ID, USER_ID, 2, REQUEST_ID);
-            doNothing().when(eventService).createOrder(any(TicketOrderRequest.class));
+            TicketOrderRequest request = new TicketOrderRequest(USER_ID, 2, REQUEST_ID);
+            doNothing().when(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -113,33 +126,38 @@ class EventControllerTest {
                     .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isAccepted());
 
-            verify(eventService).createOrder(any(TicketOrderRequest.class));
+            verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
         }
 
         @Test
-        @DisplayName("400 Bad Request — eventId in path does not match body")
-        void shouldReturn400WhenEventIdMismatch() throws Exception {
-            // given — body carries a different event ID
-            TicketOrderRequest request = new TicketOrderRequest(OTHER_EVENT_ID, USER_ID, 2, REQUEST_ID);
+        @DisplayName("400 Bad Request — userId is blank (@NotBlank)")
+        void shouldReturn400WhenUserIdIsBlank() throws Exception {
+            // given
+            String json = """
+                    {
+                        "userId": "   ",
+                        "quantity": 2,
+                        "requestId": "%s"
+                    }
+                    """.formatted(REQUEST_ID);
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
+                    .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any());
+            verify(eventService, never()).createOrder(any(), any());
         }
 
         @Test
-        @DisplayName("400 Bad Request — eventId in body is blank (@NotBlank)")
-        void shouldReturn400WhenEventIdIsBlank() throws Exception {
+        @DisplayName("400 Bad Request — quantity is null (@NotNull)")
+        void shouldReturn400WhenQuantityIsNull() throws Exception {
             // given
             String json = """
                     {
-                        "eventId": "",
                         "userId": "%s",
-                        "quantity": 2,
+                        "quantity": null,
                         "requestId": "%s"
                     }
                     """.formatted(USER_ID, REQUEST_ID);
@@ -150,51 +168,7 @@ class EventControllerTest {
                     .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any());
-        }
-
-        @Test
-        @DisplayName("400 Bad Request — userId is blank (@NotBlank)")
-        void shouldReturn400WhenUserIdIsBlank() throws Exception {
-            // given
-            String json = """
-                    {
-                        "eventId": "%s",
-                        "userId": "   ",
-                        "quantity": 2,
-                        "requestId": "%s"
-                    }
-                    """.formatted(EVENT_ID, REQUEST_ID);
-
-            // when / then
-            mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-                    .andExpect(status().isBadRequest());
-
-            verify(eventService, never()).createOrder(any());
-        }
-
-        @Test
-        @DisplayName("400 Bad Request — quantity is null (@NotNull)")
-        void shouldReturn400WhenQuantityIsNull() throws Exception {
-            // given
-            String json = """
-                    {
-                        "eventId": "%s",
-                        "userId": "%s",
-                        "quantity": null,
-                        "requestId": "%s"
-                    }
-                    """.formatted(EVENT_ID, USER_ID, REQUEST_ID);
-
-            // when / then
-            mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
-                    .andExpect(status().isBadRequest());
-
-            verify(eventService, never()).createOrder(any());
+            verify(eventService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -203,12 +177,11 @@ class EventControllerTest {
             // given
             String json = """
                     {
-                        "eventId": "%s",
                         "userId": "%s",
                         "quantity": 0,
                         "requestId": "%s"
                     }
-                    """.formatted(EVENT_ID, USER_ID, REQUEST_ID);
+                    """.formatted(USER_ID, REQUEST_ID);
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -216,7 +189,7 @@ class EventControllerTest {
                     .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any());
+            verify(eventService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -225,12 +198,11 @@ class EventControllerTest {
             // given
             String json = """
                     {
-                        "eventId": "%s",
                         "userId": "%s",
                         "quantity": -5,
                         "requestId": "%s"
                     }
-                    """.formatted(EVENT_ID, USER_ID, REQUEST_ID);
+                    """.formatted(USER_ID, REQUEST_ID);
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -238,7 +210,7 @@ class EventControllerTest {
                     .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any());
+            verify(eventService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -249,7 +221,7 @@ class EventControllerTest {
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any());
+            verify(eventService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -258,12 +230,11 @@ class EventControllerTest {
             // requestId has no validation, null is valid
             String json = """
                     {
-                        "eventId": "%s",
                         "userId": "%s",
                         "quantity": 1
                     }
-                    """.formatted(EVENT_ID, USER_ID);
-            doNothing().when(eventService).createOrder(any(TicketOrderRequest.class));
+                    """.formatted(USER_ID);
+            doNothing().when(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -271,7 +242,28 @@ class EventControllerTest {
                     .content(json))
                     .andExpect(status().isAccepted());
 
-            verify(eventService).createOrder(any(TicketOrderRequest.class));
+            verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
+        }
+
+        @Test
+        @DisplayName("400 Bad Request — eventId is blank (@NotBlank on path variable)")
+        void shouldReturn400WhenEventIdIsBlank() throws Exception {
+            // given
+            String json = """
+                    {
+                        "userId": "%s",
+                        "quantity": 2,
+                        "requestId": "%s"
+                    }
+                    """.formatted(USER_ID, REQUEST_ID);
+
+            // when / then
+            mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", "   ")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json))
+                    .andExpect(status().isBadRequest());
+
+            verify(eventService, never()).createOrder(any(), any());
         }
     }
 }
