@@ -1,8 +1,10 @@
 package de.playground.scalable_ticketing.ticket_api.service;
 
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
+import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
+import de.playground.scalable_ticketing.ticket_api.util.TicketOrderRequestMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
@@ -16,8 +18,7 @@ import java.time.Duration;
 /**
  * Service handling event and ticket related business logic.
  * Responsibilities:
- * - Checking ticket availability using Redis cache or database as fallback
- * (Look-aside pattern).
+ * - Checking ticket availability using Redis cache or database as fallback (Look-aside pattern).
  * - Placing ticket orders by publishing events to RabbitMQ.
  */
 @Service
@@ -52,7 +53,8 @@ public class EventService {
      * Fallback to database and populate cache if cache miss occurs.
      *
      * @param eventId The event ID.
-     * @return Availability response.
+     * @throws EventNotFoundException if the event is not found in the database.
+     * @return {@link TicketAvailabilityResponse} containing the event ID and availability count.
      */
     public TicketAvailabilityResponse getAvailabilityCount(String eventId) {
         final String cacheKey = String.format(CACHE_KEY_FORMAT, eventId);
@@ -77,14 +79,15 @@ public class EventService {
     }
 
     /**
-     * Places a ticket order by publishing a message to the RabbitMQ exchange.
-     * The order processing is handled asynchronously by the worker service.
+     * Places a ticket order by publishing a {@link TicketOrderEvent} to the RabbitMQ queue.
      *
-     * @param orderRequest contains the order details
+     * @param eventId      the unique identifier of the event
+     * @param orderRequest the validated request body
      */
-    public void createOrder(TicketOrderRequest orderRequest) {
-        logger.info("Placing order for event: {} by user: {}", orderRequest.eventId(), orderRequest.userId());
-        rabbitTemplate.convertAndSend(exchange, routingKey, orderRequest);
-        logger.info("Order request sent to RabbitMQ exchange: {}, routingKey: {}", exchange, routingKey);
+    public void createOrder(String eventId, TicketOrderRequest orderRequest) {
+        logger.info("Placing order for event: {} by user: {}", eventId, orderRequest.userId());
+        TicketOrderEvent event = TicketOrderRequestMapper.toEvent(eventId, orderRequest);
+        rabbitTemplate.convertAndSend(exchange, routingKey, event);
+        logger.info("Order event sent to RabbitMQ exchange: {}, routingKey: {}", exchange, routingKey);
     }
 }

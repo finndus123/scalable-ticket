@@ -11,15 +11,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/events")
+@Validated
 @Tag(name = "Events", description = "Endpoints for querying ticket availability and placing ticket orders for events")
 public class EventController {
 
@@ -42,7 +45,11 @@ public class EventController {
             @ApiResponse(responseCode = "404", description = "Event not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE, schema = @Schema(type = "string")))
     })
     @GetMapping("/{eventId}/tickets/availability")
-    public ResponseEntity<TicketAvailabilityResponse> checkAvailability(@PathVariable String eventId) {
+    public ResponseEntity<TicketAvailabilityResponse> checkAvailability(
+            @PathVariable
+            @NotBlank(message = "Event ID must not be blank")
+            String eventId
+    ) {
         logger.info("Request to check availability for event: {}", eventId);
         return ResponseEntity.ok(eventService.getAvailabilityCount(eventId));
     }
@@ -50,30 +57,26 @@ public class EventController {
     /**
      * Places a ticket order.
      *
-     * @param eventId      The ID of the event.
-     * @param orderRequest The order request details.
-     * @return 202 Accepted if validated.
+     * @param eventId      The ID of the event
+     * @param orderRequest The order request details
+     * @return 202 Accepted if the request is valid and has been queued.
      */
-    @Operation(summary = "Place a ticket order", description = "Places an order for a ticket for the corresponding event.",
-            parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ticket order details", required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketOrderRequest.class))))
+    @Operation(summary = "Place a ticket order", description = "Places an order for a ticket for the corresponding event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ticket order details", required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketOrderRequest.class))))
     @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "Order accepted and queued for processing", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Invalid request: validation failed or event ID mismatch between path and body", content = @Content)
+            @ApiResponse(responseCode = "202", description = "Order accepted and queued for processing"),
+            @ApiResponse(responseCode = "400", description = "Invalid request: validation failed")
     })
     @PostMapping("/{eventId}/tickets/order")
     public ResponseEntity<Void> placeOrder(
-            @PathVariable String eventId,
-            @Valid @RequestBody TicketOrderRequest orderRequest) {
-
+            @PathVariable
+            @NotBlank(message = "Event ID must not be blank")
+            String eventId,
+            @Valid
+            @RequestBody
+            TicketOrderRequest orderRequest
+    ) {
         logger.info("Request to place order for event: {}, payload: {}", eventId, orderRequest);
-
-        // Path variable validation
-        if (!eventId.equals(orderRequest.eventId())) {
-            logger.warn("Event ID mismatch: path={}, body={}", eventId, orderRequest.eventId());
-            return ResponseEntity.badRequest().build();
-        }
-
-        eventService.createOrder(orderRequest);
+        eventService.createOrder(eventId, orderRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }
