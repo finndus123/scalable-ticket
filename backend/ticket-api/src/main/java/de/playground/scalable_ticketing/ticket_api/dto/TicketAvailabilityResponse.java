@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Response DTO providing ticket availability details.
- * Implemented as a Record.
  */
 @Schema(description = "Ticket availability information for a specific event")
 public record TicketAvailabilityResponse(
@@ -13,5 +12,6 @@ public record TicketAvailabilityResponse(
         String eventId,
         @Schema(description = "Number of tickets currently available for purchase", example = "150")
         int availableTickets
+
 ) {
 }
