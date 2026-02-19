@@ -24,7 +24,7 @@ This project is a private playground for learning concepts and technologies for 
 
 - **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
 - **Eventual Consistency:** User requests are acknowledged immediately (HTTP 202), while the actual data consistency is ensured asynchronously by the worker.
-- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods) and an event driven architecture with a message queue.
+- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods) an event driven architecture with a message queue and resilience4j (timeouts, circuit breakers, bulkheads).
 - **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
 
 ## Folder Structure
@@ -39,6 +39,15 @@ The backend is organized as a Maven multi-module project.
   - **apps:** Manifests for application services.
   - **infrastructure:** Manifests for system infrastructure.
 
+## Spring Libraries
+- TODO
+
+## How to start locally:
+
+```bash
+    TODO
+```
+
 ## Planned ideas for the future:
 
 - Kubernetes Horizontal Pod Autoscaling
@@ -47,8 +56,3 @@ The backend is organized as a Maven multi-module project.
 - JWT Authentication
 - Simple Frontend with React
 
-## How to start locally:
-
-```bash
-    TODO
-```

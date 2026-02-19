@@ -58,18 +58,32 @@ public class EventService {
      */
     public TicketAvailabilityResponse getAvailabilityCount(String eventId) {
         final String cacheKey = String.format(CACHE_KEY_FORMAT, eventId);
-        final Object cachedValue = redisTemplate.opsForValue().get(cacheKey);
+        Integer availabilityCount = null;
 
-        if (cachedValue != null) {
-            final int availabilityCount = (Integer) cachedValue;
+        try {
+            Object cachedValue = redisTemplate.opsForValue().get(cacheKey);
+            if (cachedValue != null) {
+                availabilityCount = (Integer) cachedValue;
+            }
+        } catch (Exception e) {
+            logger.error("Error reading from Redis cache for key: {}. Fallback to database.", cacheKey, e);
+        }
+
+        if (availabilityCount != null) {
             return new TicketAvailabilityResponse(eventId, availabilityCount);
         }
 
         logger.info("Cache miss for event availability: {}. Falling back to database.", eventId);
+
+        // Todo: add CircuitBreaker, configure timeouts, maybe Bulkheads
         return eventRepository.findById(eventId)
                 .map(event -> {
                     int count = event.getAvailableTickets();
-                    redisTemplate.opsForValue().set(cacheKey, count, CACHE_TTL);
+                    try {
+                        redisTemplate.opsForValue().set(cacheKey, count, CACHE_TTL);
+                    } catch (Exception e) {
+                        logger.error("Error writing to Redis cache for key: {}", cacheKey, e);
+                    }
                     return new TicketAvailabilityResponse(eventId, count);
                 })
                 .orElseThrow(() -> {
@@ -87,6 +101,7 @@ public class EventService {
     public void createOrder(String eventId, TicketOrderRequest orderRequest) {
         logger.info("Placing order for event: {} by user: {}", eventId, orderRequest.userId());
         TicketOrderEvent event = TicketOrderRequestMapper.toEvent(eventId, orderRequest);
+        // Todo: configure retry, add circuit breaker
         rabbitTemplate.convertAndSend(exchange, routingKey, event);
         logger.info("Order event sent to RabbitMQ exchange: {}, routingKey: {}", exchange, routingKey);
     }
