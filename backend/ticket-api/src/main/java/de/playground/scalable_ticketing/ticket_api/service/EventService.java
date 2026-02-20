@@ -1,51 +1,39 @@
 package de.playground.scalable_ticketing.ticket_api.service;
-
-import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
+import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
 import de.playground.scalable_ticketing.ticket_api.util.TicketOrderRequestMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.Duration;
+import java.util.Optional;
 
 /**
  * Service handling event and ticket related business logic.
+
  * Responsibilities:
- * - Checking ticket availability using Redis cache or database as fallback (Look-aside pattern).
- * - Placing ticket orders by publishing events to RabbitMQ.
+ *  - Checking ticket availability using Redis cache or database as fallback (Look-aside pattern).
+ *  - Placing ticket orders by publishing events to RabbitMQ.
+ * 
+ * Infrastructure calls are delegated to dedicated service classes: ({@link EventCacheService}, {@link EventDatabaseService}, {@link EventMessagingService}) so that resilience4j annotations are applied via Spring AOP proxy.
  */
 @Service
 public class EventService {
 
-    private static final String CACHE_KEY_FORMAT = "event:%s:availability";
-    private static final Duration CACHE_TTL = Duration.ofSeconds(10);
-
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    private final EventRepository eventRepository;
-    private final RabbitTemplate rabbitTemplate;
-
-    @Value("${rabbitmq.exchange:ticket.exchange}")
-    private String exchange;
-
-    @Value("${rabbitmq.routing.key:ticket.order.created}")
-    private String routingKey;
+    private final EventCacheService eventCacheService;
+    private final EventDatabaseService eventDatabaseService;
+    private final EventMessagingService eventMessagingService;
 
     public EventService(
-            RedisTemplate<String, Object> redisTemplate,
-            EventRepository eventRepository,
-            RabbitTemplate rabbitTemplate) {
-        this.redisTemplate = redisTemplate;
-        this.eventRepository = eventRepository;
-        this.rabbitTemplate = rabbitTemplate;
+            EventCacheService eventCacheService,
+            EventDatabaseService eventDatabaseService,
+            EventMessagingService eventMessagingService) {
+        this.eventCacheService = eventCacheService;
+        this.eventDatabaseService = eventDatabaseService;
+        this.eventMessagingService = eventMessagingService;
     }
 
     /**
@@ -57,39 +45,17 @@ public class EventService {
      * @return {@link TicketAvailabilityResponse} containing the event ID and availability count.
      */
     public TicketAvailabilityResponse getAvailabilityCount(String eventId) {
-        final String cacheKey = String.format(CACHE_KEY_FORMAT, eventId);
-        Integer availabilityCount = null;
+        Optional<Integer> cacheAvailabilityCount = eventCacheService.getAvailabilityCountFromCache(eventId);
 
-        try {
-            Object cachedValue = redisTemplate.opsForValue().get(cacheKey);
-            if (cachedValue != null) {
-                availabilityCount = (Integer) cachedValue;
-            }
-        } catch (Exception e) {
-            logger.error("Error reading from Redis cache for key: {}. Fallback to database.", cacheKey, e);
-        }
-
-        if (availabilityCount != null) {
-            return new TicketAvailabilityResponse(eventId, availabilityCount);
+        if (cacheAvailabilityCount.isPresent()) {
+            return new TicketAvailabilityResponse(eventId, cacheAvailabilityCount.get());
         }
 
         logger.info("Cache miss for event availability: {}. Falling back to database.", eventId);
 
-        // Todo: add CircuitBreaker, configure timeouts, maybe Bulkheads
-        return eventRepository.findById(eventId)
-                .map(event -> {
-                    int count = event.getAvailableTickets();
-                    try {
-                        redisTemplate.opsForValue().set(cacheKey, count, CACHE_TTL);
-                    } catch (Exception e) {
-                        logger.error("Error writing to Redis cache for key: {}", cacheKey, e);
-                    }
-                    return new TicketAvailabilityResponse(eventId, count);
-                })
-                .orElseThrow(() -> {
-                    logger.warn("Event not found in database: {}", eventId);
-                    return new EventNotFoundException(eventId);
-                });
+        int databaseAvailabilityCount = eventDatabaseService.findAvailableTickets(eventId);
+        eventCacheService.writeAvailabilityCountToCache(eventId, databaseAvailabilityCount);
+        return new TicketAvailabilityResponse(eventId, databaseAvailabilityCount);
     }
 
     /**
@@ -101,8 +67,6 @@ public class EventService {
     public void createOrder(String eventId, TicketOrderRequest orderRequest) {
         logger.info("Placing order for event: {} by user: {}", eventId, orderRequest.userId());
         TicketOrderEvent event = TicketOrderRequestMapper.toEvent(eventId, orderRequest);
-        // Todo: configure retry, add circuit breaker
-        rabbitTemplate.convertAndSend(exchange, routingKey, event);
-        logger.info("Order event sent to RabbitMQ exchange: {}, routingKey: {}", exchange, routingKey);
+        eventMessagingService.sendOrderEvent(event);
     }
 }

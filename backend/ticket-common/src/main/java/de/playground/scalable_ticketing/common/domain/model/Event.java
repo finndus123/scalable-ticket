@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Domain Entity representing an Event.
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
 public class Event {
 
     @Id
-    private String id;
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -32,18 +33,18 @@ public class Event {
 
     public Event() {}
 
-    public Event(String id, String name, Integer totalAllocation, Integer availableTickets) {
+    public Event(UUID id, String name, Integer totalAllocation, Integer availableTickets) {
         this.id = id;
         this.name = name;
         this.totalAllocation = totalAllocation;
         this.availableTickets = availableTickets;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

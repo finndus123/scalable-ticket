@@ -1,3 +1,52 @@
 spring:
   application:
     name: ticket-api-test
+  # Disable real datasource for integration tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+
+# Resilience4j Test Config – smaller sliding windows for faster test feedback
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: false
+        slidingWindowType: COUNT_BASED
+    instances:
+      redis:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 2
+
+      database:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        # Ignore custom exceptions – must NOT trigger the circuit breaker
+        ignoreExceptions:
+          - de.playground.scalable_ticketing.common.exception.EventNotFoundException
+
+      rabbitmq:
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+
+  bulkhead:
+    instances:
+      database:
+        maxConcurrentCalls: 30
+        maxWaitDuration: 50ms
+
+  retry:
+    instances:
+      rabbitmq:
+        maxAttempts: 3
+        waitDuration: 100ms
+        retryExceptions:
+          - org.springframework.amqp.AmqpException
+          - java.io.IOException

@@ -1,7 +1,73 @@
 spring:
   application:
     name: ticket-api
+  # Database Config
+  datasource:
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 3000
+  # Redis Config
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 100ms
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    template:
+      receive-timeout: 3000
+      reply-timeout: 3000
 
+# Resilience4j Config
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+    instances:
+      redis:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+
+      database:
+        slidingWindowSize: 15
+        failureRateThreshold: 50
+        waitDurationInOpenState: 20s
+        # Ignore custom exceptions
+        ignoreExceptions:
+          - de.playground.scalable_ticketing.common.exception.EventNotFoundException
+
+      rabbitmq:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+
+  bulkhead:
+    instances:
+      database:
+        maxConcurrentCalls: 30
+        maxWaitDuration: 50ms
+
+  retry:
+    instances:
+      rabbitmq:
+        maxAttempts: 3
+        waitDuration: 300ms
+        retryExceptions:
+          - org.springframework.amqp.AmqpException
+          - java.io.IOException
+
+# RabbitMQ Config
 rabbitmq:
   exchange: ticket.exchange
   queue: ticket.order.queue
