@@ -1,27 +1,45 @@
 package de.playground.scalable_ticketing.ticket_api;
 
-import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.ticket_api.config.TestInfrastructureConfig;
-import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.AmqpException;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
+import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
+import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import de.playground.scalable_ticketing.ticket_api.config.TestInfrastructureConfig;
+import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
+import de.playground.scalable_ticketing.ticket_api.service.EventMessagingService;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 
 /**
  * Integration test verifying that resilience4j patterns (circuit breakers, bulkheads, retries) are correctly wired via Spring AOP proxies.
@@ -48,12 +66,18 @@ class ResiliencePatternIntegrationTest {
     @MockitoBean
     private EventRepository eventRepository;
 
+    @MockitoBean
+    private RabbitTemplate rabbitTemplate;
+
     // -------------------------------------------------------------------------
     // Real beans under test
     // -------------------------------------------------------------------------
 
     @Autowired
     private EventDatabaseService eventDatabaseService;
+
+    @Autowired
+    private EventMessagingService eventMessagingService;
 
     @Autowired
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -150,5 +174,104 @@ class ResiliencePatternIntegrationTest {
         }
     }
 
-    // Todo: Add tests for other circuit breaker, bulkhead and retry patterns
+    // =========================================================================
+    // Database Bulkhead
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Database Bulkhead – concurrent requests")
+    class DatabaseBulkheadTests {
+
+        @Test
+        @DisplayName("Exceeding max concurrent calls triggers BulkheadFullException")
+        void exceedingMaxConcurrentCallsShouldTriggerBulkheadFullException() throws InterruptedException {
+            int threadCount = 50; 
+            CountDownLatch startLatch = new CountDownLatch(1);
+            CountDownLatch finishLatch = new CountDownLatch(threadCount);
+
+            // given – slow database simulation
+            when(eventRepository.findAvailableTicketsById(any(UUID.class))).thenAnswer(invocation -> {
+                Thread.sleep(500);
+                return Optional.of(100);
+            });
+
+            ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+            List<Future<Integer>> futures = new ArrayList<>();
+
+            // when – submit multiple concurrent requests
+            for (int i = 0; i < threadCount; i++) {
+                futures.add(executorService.submit(() -> {
+                    startLatch.await(); // wait for all threads to start at the same time
+                    try {
+                        return eventDatabaseService.findAvailableTickets(EXISTING_EVENT_ID);
+                    } finally {
+                        finishLatch.countDown();
+                    }
+                }));
+            }
+
+            startLatch.countDown(); // unblock all threads
+            finishLatch.await();    // wait for all to finish
+
+            executorService.shutdown();
+
+            // then – at least one request must have failed with BulkheadFullException
+            long failedWithBulkhead = futures.stream().filter(f -> {
+                try {
+                    f.get();
+                    return false;
+                } catch (ExecutionException e) {
+                    return e.getCause() instanceof BulkheadFullException;
+                } catch (InterruptedException e) {
+                    return false;
+                }
+            }).count();
+
+            assertThat(failedWithBulkhead)
+                    .as("Expected some calls to fail with BulkheadFullException because max concurrent calls were exceeded")
+                    .isGreaterThan(0);
+        }
+    }
+
+    // =========================================================================
+    // RabbitMQ Retry
+    // =========================================================================
+
+    @Nested
+    @DisplayName("RabbitMQ Retry – retry on failure")
+    class RabbitMqRetryTests {
+
+        @Test
+        @DisplayName("AmqpException triggers retry and eventually fails if max attempts exceeded")
+        void maxRetriesExceededShouldThrow() {
+            // given – publishing always fails with AmqpException
+            AmqpException exception = new AmqpException("RabbitMQ connection down") {};
+            doThrow(exception).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
+
+            TicketOrderEvent event = new TicketOrderEvent("req-1", EXISTING_EVENT_ID, "user-1", 2, Instant.now().toString());
+
+            // when / then
+            assertThatThrownBy(() -> eventMessagingService.sendOrderEvent(event))
+                    .isInstanceOf(AmqpException.class);
+
+            // verify that it was retried
+            verify(rabbitTemplate, atLeast(2)).convertAndSend(anyString(), anyString(), eq(event));
+        }
+        
+        @Test
+        @DisplayName("AmqpException triggers retry and succeeds on subsequent try")
+        void retrySucceedsOnSubsequentTry() {
+            // given – publishing fails once, then succeeds
+            AmqpException exception = new AmqpException("Transient network glitch") {};
+            doThrow(exception).doNothing().when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
+
+            TicketOrderEvent event = new TicketOrderEvent("req-2", EXISTING_EVENT_ID, "user-2", 1, Instant.now().toString());
+
+            // when 
+            eventMessagingService.sendOrderEvent(event);
+
+            // then – no exception thrown, and rabbitTemplate was called exactly twice
+            verify(rabbitTemplate, times(2)).convertAndSend(anyString(), anyString(), eq(event));
+        }
+    }
 }
