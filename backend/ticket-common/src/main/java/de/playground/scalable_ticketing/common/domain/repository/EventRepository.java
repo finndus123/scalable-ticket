@@ -14,7 +14,7 @@ import java.util.UUID;
  * Acts as the single source of truth for database access to events.
  */
 @Repository
-public interface EventRepository extends JpaRepository<Event, String> {
+public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @Query("SELECT e.availableTickets FROM Event e WHERE e.id = :id")
     Optional<Integer> findAvailableTicketsById(@Param("id") UUID id);
