@@ -1,13 +1,6 @@
 spring:
   application:
     name: ticket-api-test
-  # Disable real datasource for integration tests
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
-      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
 
 # Resilience4j Test Config – smaller sliding windows for faster test feedback
 resilience4j:
