@@ -73,3 +73,17 @@ rabbitmq:
   queue: ticket.order.queue
   routing:
     key: ticket.order.created
+
+# Actuator & Prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
