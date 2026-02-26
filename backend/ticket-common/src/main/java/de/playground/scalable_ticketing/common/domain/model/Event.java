@@ -33,11 +33,13 @@ public class Event {
 
     public Event() {}
 
-    public Event(UUID id, String name, Integer totalAllocation, Integer availableTickets) {
+    public Event(UUID id, String name, String location, Integer totalAllocation, Integer availableTickets,  BigDecimal price) {
         this.id = id;
         this.name = name;
+        this.location = location;
         this.totalAllocation = totalAllocation;
         this.availableTickets = availableTickets;
+        this.price = price;
     }
 
     public UUID getId() {
