@@ -1,17 +1,42 @@
 spring:
   application:
     name: ticket-worker
+  # Database Config
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  # Redis Config
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+  # RabbitMQ Config
   rabbitmq:
     host: ${RABBITMQ_HOST}
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+
+# RabbitMQ Config
+rabbitmq:
+  exchange: ticket.exchange
+  queue: ticket.order.queue
+  routing-key: ticket.order.#
+  # Pre-fetch count to prevent a single worker from hoarding tasks
+  prefetch-count: 1
+
+# Actuator & Prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,info
+  endpoint:
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true

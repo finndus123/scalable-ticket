@@ -1,11 +1,11 @@
-package de.playground.scalable_ticketing.ticket_api.config;
+package de.playground.scalable_ticketing.ticket_worker.config;
 
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Configuration class for RabbitMQ integration.
- * Defines the exchange, queue, binding, and message conversion settings.
+ * Defines the exchange, queue, binding, message conversion, and listener limits.
  */
 @Configuration
 public class RabbitMQConfig {
@@ -25,13 +25,14 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.queue}")
     private String queue;
 
-    @Value("${rabbitmq.routing.key}")
+    @Value("${rabbitmq.routing-key}")
     private String routingKey;
 
+    @Value("${rabbitmq.prefetch-count}")
+    private int prefetchCount;
+
     /**
-     * Creates the Topic Exchange for ticket operations.
-     *
-     * @return The configured TopicExchange.
+     * Explicitly declare the Topic Exchange to ensure the topology exists.
      */
     @Bean
     public TopicExchange exchange() {
@@ -39,22 +40,15 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Creates the durable Queue for ticket orders.
-     *
-     * @return The configured Queue.
+     * Explicitly declare the durable Queue to ensure the topology exists.
      */
     @Bean
     public Queue queue() {
-        // durable true -> queue survives broker restart
         return new Queue(queue, true);
     }
 
     /**
-     * Binds the Queue to the Exchange using the routing key.
-     *
-     * @param queue    The queue to bind.
-     * @param exchange The exchange to bind to.
-     * @return The Binding definition.
+     * Explicitly declare the Binding to ensure the topology exists.
      */
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
@@ -62,9 +56,7 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Configures the MessageConverter to use JSON serialization using Jackson.
-     *
-     * @return The JacksonJsonMessageConverter instance.
+     * Configures the MessageConverter to use JSON serialization for receiving payloads.
      */
     @Bean
     public MessageConverter jsonMessageConverter() {
@@ -72,16 +64,15 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Creates the RabbitTemplate for sending messages.
-     * Configured with the JSON message converter.
-     *
-     * @param connectionFactory The ConnectionFactory to use.
-     * @return The configured RabbitTemplate.
+     * Configures the listener container factory.
+     * Sets the prefetch count to prevent workers from hoarding unacknowledged messages.
      */
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(jsonMessageConverter());
-        return rabbitTemplate;
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(jsonMessageConverter());
+        factory.setPrefetchCount(prefetchCount);
+        return factory;
     }
 }
