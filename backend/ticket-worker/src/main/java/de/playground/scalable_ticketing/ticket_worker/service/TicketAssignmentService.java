@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.playground.scalable_ticketing.common.domain.model.Ticket;
 import de.playground.scalable_ticketing.common.domain.repository.TicketRepository;
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 
 /**
  * Service responsible for assigning available tickets to an order.
@@ -45,6 +47,8 @@ public class TicketAssignmentService {
             includes = OptimisticLockingFailureException.class,
             delay = 100
     )
+    @CircuitBreaker(name = "database")
+    @Bulkhead(name = "database")
     @Transactional
     public void assignTickets(UUID eventId, UUID orderId, int quantity) {
         List<Ticket> availableTickets = ticketRepository.findAvailableByEventId(

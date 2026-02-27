@@ -6,19 +6,12 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
 import de.playground.scalable_ticketing.common.domain.model.Event;
 import de.playground.scalable_ticketing.common.domain.model.Order;
 import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
 import de.playground.scalable_ticketing.common.domain.model.User;
-import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
-import de.playground.scalable_ticketing.common.domain.repository.OrderRepository;
-import de.playground.scalable_ticketing.common.domain.repository.UserRepository;
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
 import de.playground.scalable_ticketing.ticket_worker.service.notification.NotificationFactory;
 import de.playground.scalable_ticketing.ticket_worker.service.notification.OrderNotifier;
 
@@ -39,26 +32,19 @@ import de.playground.scalable_ticketing.ticket_worker.service.notification.Order
 public class EventWorkerService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventWorkerService.class);
-    private static final String CACHE_KEY_PATTERN = "event:%s:availability";
 
-    private final UserRepository userRepository;
-    private final EventRepository eventRepository;
-    private final OrderRepository orderRepository;
+    private final WorkerDatabaseService databaseService;
+    private final WorkerCacheService cacheService;
     private final TicketAssignmentService ticketAssignmentService;
-    private final RedisTemplate<String, Object> redisTemplate;
 
     public EventWorkerService(
-            UserRepository userRepository,
-            EventRepository eventRepository,
-            OrderRepository orderRepository,
-            TicketAssignmentService ticketAssignmentService,
-            RedisTemplate<String, Object> redisTemplate
+            WorkerDatabaseService databaseService,
+            WorkerCacheService cacheService,
+            TicketAssignmentService ticketAssignmentService
     ) {
-        this.userRepository = userRepository;
-        this.eventRepository = eventRepository;
-        this.orderRepository = orderRepository;
+        this.databaseService = databaseService;
+        this.cacheService = cacheService;
         this.ticketAssignmentService = ticketAssignmentService;
-        this.redisTemplate = redisTemplate;
     }
 
     /**
@@ -72,19 +58,10 @@ public class EventWorkerService {
         logger.info("Received ticket order event: requestId={}, eventId={}, userId={}, quantity={}",
                 ticketOrder.requestId(), ticketOrder.eventId(), ticketOrder.userId(), ticketOrder.quantity());
 
-        User user = userRepository.findById(UUID.fromString(ticketOrder.userId()))
-                .orElseThrow(() -> {
-                    logger.error("User not found with id {}", ticketOrder.userId());
-                    return new UserNotFoundException(ticketOrder.userId());
-                });
+        User user = databaseService.getUserOrThrow(UUID.fromString(ticketOrder.userId()));
+        Event event = databaseService.getEventOrThrow(UUID.fromString(ticketOrder.eventId()));
 
-        Event event = eventRepository.findById(UUID.fromString(ticketOrder.eventId()))
-                .orElseThrow(() -> {
-                    logger.error("Event not found with id {}", ticketOrder.eventId());
-                    return new EventNotFoundException(ticketOrder.eventId());
-                });
-
-        Order order = orderRepository.save(
+        Order order = databaseService.saveOrder(
                 new Order(
                         UUID.randomUUID(),
                         user.getId(),
@@ -104,12 +81,12 @@ public class EventWorkerService {
             );
 
             event.decrementAvailableTickets(ticketOrder.quantity());
-            eventRepository.save(event);
+            databaseService.saveEvent(event);
 
-            invalidateAvailabilityCache(ticketOrder.eventId());
+            cacheService.invalidateAvailabilityCache(ticketOrder.eventId());
 
             order.setStatus(OrderStatus.COMPLETED);
-            orderRepository.save(order);
+            databaseService.saveOrder(order);
 
             logger.info("Order {} completed successfully for event {} with {} tickets",
                     order.getId(), ticketOrder.eventId(), ticketOrder.quantity());
@@ -120,15 +97,9 @@ public class EventWorkerService {
                     order.getId(), ticketOrder.eventId(), ex.getMessage(), ex);
 
             order.setStatus(OrderStatus.FAILED);
-            orderRepository.save(order);
+            databaseService.saveOrder(order);
 
             userNotifier.notifyError();
         }
-    }
-
-    private void invalidateAvailabilityCache(String eventId) {
-        String cacheKey = String.format(CACHE_KEY_PATTERN, eventId);
-        redisTemplate.delete(cacheKey);
-        logger.info("Invalidated Redis cache for key {}", cacheKey);
     }
 }

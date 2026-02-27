@@ -19,6 +19,37 @@ spring:
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
 
+# Resilience4j Config
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+    instances:
+      redis:
+        slidingWindowSize: 20
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 5
+      database:
+        slidingWindowSize: 15
+        failureRateThreshold: 50
+        waitDurationInOpenState: 20s
+        ignoreExceptions:
+          - de.playground.scalable_ticketing.common.exception.EventNotFoundException
+          - de.playground.scalable_ticketing.common.exception.UserNotFoundException
+          - de.playground.scalable_ticketing.common.exception.InsufficientTicketsException
+  bulkhead:
+    instances:
+      database:
+        maxConcurrentCalls: 30
+        maxWaitDuration: 50ms
+  timelimiter:
+    instances:
+      redis:
+        timeoutDuration: 500ms
+
 # RabbitMQ Config
 rabbitmq:
   exchange: ticket.exchange
