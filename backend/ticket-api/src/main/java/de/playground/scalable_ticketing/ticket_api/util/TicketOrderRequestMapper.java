@@ -2,6 +2,7 @@ package de.playground.scalable_ticketing.ticket_api.util;
 
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
+
 import java.time.Instant;
 
 /**

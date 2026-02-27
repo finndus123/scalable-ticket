@@ -12,17 +12,17 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link EventService}.
- *
+ * <p>
  * All infrastructure dependencies are replaced by Mockito mocks for the delegated service classes ({@link EventCacheService}, {@link EventDatabaseService}, {@link EventMessagingService}).
  */
 @ExtendWith(MockitoExtension.class)
@@ -33,8 +33,8 @@ class EventServiceTest {
     // Constants
     // -------------------------------------------------------------------------
 
-    private static final String EVENT_ID   = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
-    private static final String USER_ID    = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a";
+    private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
+    private static final String USER_ID = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a";
     private static final String REQUEST_ID = "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e";
 
     // -------------------------------------------------------------------------

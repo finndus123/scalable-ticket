@@ -32,9 +32,11 @@ public class DataLoader implements CommandLineRunner {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
 
-    public DataLoader(TicketRepository ticketRepository,
-                      EventRepository eventRepository,
-                      UserRepository userRepository){
+    public DataLoader(
+            TicketRepository ticketRepository,
+            EventRepository eventRepository,
+            UserRepository userRepository
+    ) {
         this.ticketRepository = ticketRepository;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
@@ -43,7 +45,7 @@ public class DataLoader implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        if(userRepository.count() == 0 && eventRepository.count() == 0 && ticketRepository.count() == 0) {
+        if (userRepository.count() == 0 && eventRepository.count() == 0 && ticketRepository.count() == 0) {
             User homer = new User(UUID.randomUUID(), "Homer Simpson", "homer.simpson@nuclear.com");
             User mrBurns = new User(UUID.randomUUID(), "Montgomery Burns", "mr.burns@nuclear.com");
             userRepository.saveAll(List.of(mrBurns, homer));
@@ -53,7 +55,7 @@ public class DataLoader implements CommandLineRunner {
             eventRepository.save(krustyShow);
 
             List<Ticket> tickets = new ArrayList<>();
-            for(int i = 0; i < krustyShow.getAvailableTickets(); i++) {
+            for (int i = 0; i < krustyShow.getAvailableTickets(); i++) {
                 tickets.add(new Ticket(UUID.randomUUID(), krustyShowId, TicketStatus.AVAILABLE));
             }
             ticketRepository.saveAll(tickets);

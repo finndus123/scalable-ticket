@@ -1,11 +1,7 @@
 package de.playground.scalable_ticketing.common.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
@@ -36,9 +32,17 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus status;
 
-    public Order() {}
+    public Order() {
+    }
 
-    public Order(UUID id, UUID userId, UUID eventId, BigDecimal totalAmount, Instant createdAt, OrderStatus status) {
+    public Order(
+            UUID id,
+            UUID userId,
+            UUID eventId,
+            BigDecimal totalAmount,
+            Instant createdAt,
+            OrderStatus status
+    ) {
         this.id = id;
         this.userId = userId;
         this.eventId = eventId;

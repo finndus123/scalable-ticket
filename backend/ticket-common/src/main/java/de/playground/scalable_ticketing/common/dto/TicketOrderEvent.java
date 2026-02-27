@@ -9,5 +9,6 @@ public record TicketOrderEvent(
         String eventId,
         String userId,
         int quantity,
-        String timestamp) {
+        String timestamp
+) {
 }

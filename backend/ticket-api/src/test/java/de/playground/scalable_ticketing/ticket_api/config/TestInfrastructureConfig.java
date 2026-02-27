@@ -30,6 +30,22 @@ import static org.mockito.Mockito.mock;
 @TestConfiguration
 public class TestInfrastructureConfig {
 
+    @Bean
+    public TestRabbitTemplate template() throws IOException {
+        return new TestRabbitTemplate(connectionFactory());
+    }
+
+    @Bean
+    public ConnectionFactory connectionFactory() throws IOException {
+        ConnectionFactory factory = mock(ConnectionFactory.class);
+        Connection connection = mock(Connection.class);
+        Channel channel = mock(Channel.class);
+        willReturn(connection).given(factory).createConnection();
+        willReturn(channel).given(connection).createChannel(anyBoolean());
+        given(channel.isOpen()).willReturn(true);
+        return factory;
+    }
+
     public static class RedisInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         static final GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:5.0.3-alpine"))
                 .withExposedPorts(6379);
@@ -45,21 +61,5 @@ public class TestInfrastructureConfig {
                     "spring.data.redis.port", redis.getMappedPort(6379).toString());
             context.getEnvironment().getPropertySources().addFirst(new MapPropertySource("testcontainers", properties));
         }
-    }
-
-    @Bean
-    public TestRabbitTemplate template() throws IOException {
-        return new TestRabbitTemplate(connectionFactory());
-    }
-
-    @Bean
-    public ConnectionFactory connectionFactory() throws IOException {
-        ConnectionFactory factory = mock(ConnectionFactory.class);
-        Connection connection = mock(Connection.class);
-        Channel channel = mock(Channel.class);
-        willReturn(connection).given(factory).createConnection();
-        willReturn(channel).given(connection).createChannel(anyBoolean());
-        given(channel.isOpen()).willReturn(true);
-        return factory;
     }
 }

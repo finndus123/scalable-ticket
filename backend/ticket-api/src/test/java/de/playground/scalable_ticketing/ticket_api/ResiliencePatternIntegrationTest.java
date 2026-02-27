@@ -1,25 +1,14 @@
 package de.playground.scalable_ticketing.ticket_api;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
+import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
+import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import de.playground.scalable_ticketing.ticket_api.config.TestInfrastructureConfig;
+import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
+import de.playground.scalable_ticketing.ticket_api.service.EventMessagingService;
+import io.github.resilience4j.bulkhead.BulkheadFullException;
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,19 +20,22 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
-import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.ticket_api.config.TestInfrastructureConfig;
-import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
-import de.playground.scalable_ticketing.ticket_api.service.EventMessagingService;
-import io.github.resilience4j.bulkhead.BulkheadFullException;
-import io.github.resilience4j.circuitbreaker.CircuitBreaker;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Integration test verifying that resilience4j patterns (circuit breakers, bulkheads, retries) are correctly wired via Spring AOP proxies.
- *
+ * <p>
  * The focus is on {@link EventNotFoundException} does <strong>not</strong> trigger the database circuit breaker, will be expanded in the future.
  */
 @SpringBootTest
@@ -185,7 +177,7 @@ class ResiliencePatternIntegrationTest {
         @Test
         @DisplayName("Exceeding max concurrent calls triggers BulkheadFullException")
         void exceedingMaxConcurrentCallsShouldTriggerBulkheadFullException() throws InterruptedException {
-            int threadCount = 50; 
+            int threadCount = 50;
             CountDownLatch startLatch = new CountDownLatch(1);
             CountDownLatch finishLatch = new CountDownLatch(threadCount);
 
@@ -245,7 +237,8 @@ class ResiliencePatternIntegrationTest {
         @DisplayName("AmqpException triggers retry and eventually fails if max attempts exceeded")
         void maxRetriesExceededShouldThrow() {
             // given – publishing always fails with AmqpException
-            AmqpException exception = new AmqpException("RabbitMQ connection down") {};
+            AmqpException exception = new AmqpException("RabbitMQ connection down") {
+            };
             doThrow(exception).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
 
             TicketOrderEvent event = new TicketOrderEvent("req-1", EXISTING_EVENT_ID, "user-1", 2, Instant.now().toString());
@@ -257,12 +250,13 @@ class ResiliencePatternIntegrationTest {
             // verify that it was retried
             verify(rabbitTemplate, atLeast(2)).convertAndSend(anyString(), anyString(), eq(event));
         }
-        
+
         @Test
         @DisplayName("AmqpException triggers retry and succeeds on subsequent try")
         void retrySucceedsOnSubsequentTry() {
             // given – publishing fails once, then succeeds
-            AmqpException exception = new AmqpException("Transient network glitch") {};
+            AmqpException exception = new AmqpException("Transient network glitch") {
+            };
             doThrow(exception).doNothing().when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
 
             TicketOrderEvent event = new TicketOrderEvent("req-2", EXISTING_EVENT_ID, "user-2", 1, Instant.now().toString());

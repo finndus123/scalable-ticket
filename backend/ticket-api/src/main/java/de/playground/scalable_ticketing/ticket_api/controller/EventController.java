@@ -39,7 +39,7 @@ public class EventController {
      * @param eventId The ID of the event.
      * @return The availability details.
      */
-    @Operation(summary = "Get ticket availability", description = "Returns the number of available tickets for the given event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") })
+    @Operation(summary = "Get ticket availability", description = "Returns the number of available tickets for the given event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3")})
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Availability information retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketAvailabilityResponse.class))),
             @ApiResponse(responseCode = "404", description = "Event not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE, schema = @Schema(type = "string")))
@@ -61,7 +61,7 @@ public class EventController {
      * @param orderRequest The order request details
      * @return 202 Accepted if the request is valid and has been queued.
      */
-    @Operation(summary = "Place a ticket order", description = "Places an order for a ticket for the corresponding event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3") }, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ticket order details", required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketOrderRequest.class))))
+    @Operation(summary = "Place a ticket order", description = "Places an order for a ticket for the corresponding event.", parameters = {@Parameter(name = "eventId", description = "Unique identifier of the event", required = true, example = "e58ed763-928c-4155-bee9-fdbaaadc15f3")}, requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ticket order details", required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = TicketOrderRequest.class))))
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "Order accepted and queued for processing"),
             @ApiResponse(responseCode = "400", description = "Invalid request: validation failed")

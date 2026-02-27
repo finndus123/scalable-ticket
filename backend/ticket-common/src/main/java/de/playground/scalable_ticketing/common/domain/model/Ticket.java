@@ -1,12 +1,7 @@
 package de.playground.scalable_ticketing.common.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+import jakarta.persistence.*;
+
 import java.util.UUID;
 
 /**
@@ -32,7 +27,8 @@ public class Ticket {
     @Version
     private Long version;
 
-    public Ticket() {}
+    public Ticket() {
+    }
 
     public Ticket(UUID id, UUID eventId, TicketStatus status) {
         this.id = id;

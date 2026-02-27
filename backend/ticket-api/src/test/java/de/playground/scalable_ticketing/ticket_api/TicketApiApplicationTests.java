@@ -11,8 +11,8 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(initializers = TestInfrastructureConfig.RedisInitializer.class)
 class TicketApiApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Test
+    void contextLoads() {
+    }
 
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 import java.util.UUID;
 
@@ -31,9 +32,17 @@ public class Event {
 
     private BigDecimal price;
 
-    public Event() {}
+    public Event() {
+    }
 
-    public Event(UUID id, String name, String location, Integer totalAllocation, Integer availableTickets,  BigDecimal price) {
+    public Event(
+            UUID id,
+            String name,
+            String location,
+            Integer totalAllocation,
+            Integer availableTickets,
+            BigDecimal price
+    ) {
         this.id = id;
         this.name = name;
         this.location = location;

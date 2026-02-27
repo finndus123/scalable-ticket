@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+
 import java.util.UUID;
 
 /**
@@ -22,7 +23,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    public User() {}
+    public User() {
+    }
 
     public User(UUID id, String name, String email) {
         this.id = id;

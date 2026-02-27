@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 @DisplayName("TicketOrderRequestMapper")
 class TicketOrderRequestMapperTest {
 
-    private static final String EVENT_ID    = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
-    private static final String USER_ID     = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a";
-    private static final String REQUEST_ID  = "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e";
+    private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
+    private static final String USER_ID = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a";
+    private static final String REQUEST_ID = "b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e";
 
     @Nested
     @DisplayName("toEvent()")
@@ -117,7 +117,7 @@ class TicketOrderRequestMapperTest {
             TicketOrderRequest request = new TicketOrderRequest(USER_ID, 2, REQUEST_ID);
 
             // when
-            TicketOrderEvent first  = TicketOrderRequestMapper.toEvent(EVENT_ID, request);
+            TicketOrderEvent first = TicketOrderRequestMapper.toEvent(EVENT_ID, request);
             TicketOrderEvent second = TicketOrderRequestMapper.toEvent(EVENT_ID, request);
 
             // then

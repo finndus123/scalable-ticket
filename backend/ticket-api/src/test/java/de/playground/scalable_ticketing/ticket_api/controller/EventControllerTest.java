@@ -1,16 +1,10 @@
 package de.playground.scalable_ticketing.ticket_api.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
+import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
+import de.playground.scalable_ticketing.ticket_api.exception.GlobalExceptionHandler;
+import de.playground.scalable_ticketing.ticket_api.service.EventService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -19,21 +13,23 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
-import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
-import de.playground.scalable_ticketing.ticket_api.exception.GlobalExceptionHandler;
-import de.playground.scalable_ticketing.ticket_api.service.EventService;
 import tools.jackson.databind.ObjectMapper;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Unit tests for {@link EventController} using Spring WebMVC test
- *
+ * <p>
  * Only the web layer is loaded for this test.
  * Tests include: Basic functionality of handing requests to Service, validation of requests and error handling.
  * {@link EventService} is replaced by a Mockito mock so no infrastructure (Redis, RabbitMQ, DB) is required.
  */
-@WebMvcTest(controllers = { EventController.class, GlobalExceptionHandler.class })
+@WebMvcTest(controllers = {EventController.class, GlobalExceptionHandler.class})
 class EventControllerTest {
 
     private static final String BASE_URL = "/api/events";
@@ -67,7 +63,7 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(get(BASE_URL + "/{eventId}/tickets/availability", EVENT_ID)
-                    .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.eventId").value(EVENT_ID))
@@ -85,7 +81,7 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(get(BASE_URL + "/{eventId}/tickets/availability", EVENT_ID)
-                    .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
 
             verify(eventService).getAvailabilityCount(EVENT_ID);
@@ -98,7 +94,7 @@ class EventControllerTest {
             // A blank segment is still a valid URL path segment, so routing succeeds,
             // but @NotBlank triggers a ConstraintViolationException → 400.
             mockMvc.perform(get(BASE_URL + "/{eventId}/tickets/availability", "   ")
-                    .accept(MediaType.APPLICATION_JSON))
+                            .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).getAvailabilityCount(any());
@@ -122,8 +118,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isAccepted());
 
             verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
@@ -143,8 +139,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());
@@ -164,8 +160,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());
@@ -185,8 +181,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());
@@ -206,8 +202,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());
@@ -218,7 +214,7 @@ class EventControllerTest {
         void shouldReturn400WhenBodyIsMissing() throws Exception {
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON))
+                            .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());
@@ -238,8 +234,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isAccepted());
 
             verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
@@ -259,8 +255,8 @@ class EventControllerTest {
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", "   ")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(json))
                     .andExpect(status().isBadRequest());
 
             verify(eventService, never()).createOrder(any(), any());

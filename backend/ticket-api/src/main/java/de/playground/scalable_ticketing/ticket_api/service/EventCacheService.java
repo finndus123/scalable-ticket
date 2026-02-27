@@ -5,12 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.util.Optional;
 
 /**
  * Service encapsulating all Redis cache interactions for event data.
- *
+ * <p>
  * Separated from {@link EventService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
  * Circuit-breaker instance: "redis"
  */

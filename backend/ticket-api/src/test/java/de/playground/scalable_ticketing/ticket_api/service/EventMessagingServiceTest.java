@@ -10,7 +10,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import java.time.Instant;
+
 import static org.mockito.Mockito.verify;
 
 
@@ -21,14 +23,12 @@ import static org.mockito.Mockito.verify;
 @DisplayName("EventMessagingService")
 class EventMessagingServiceTest {
 
-    @Mock
-    private RabbitTemplate rabbitTemplate;
-
-    @InjectMocks
-    private EventMessagingService eventMessagingService;
-
     private static final String EXCHANGE = "test.exchange";
     private static final String ROUTING_KEY = "test.routing.key";
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+    @InjectMocks
+    private EventMessagingService eventMessagingService;
 
     @BeforeEach
     void setUp() {

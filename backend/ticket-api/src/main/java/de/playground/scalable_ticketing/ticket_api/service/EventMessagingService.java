@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service encapsulating all RabbitMQ messaging interactions for ticket orders.
- * 
  * Separated from {@link EventService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
  * Circuit-breaker instance: "rabbitmq"
  * Retry instance: "rabbitmq" (retries on AmqpException and IOException)
@@ -35,10 +34,10 @@ public class EventMessagingService {
 
     /**
      * Publishes a {@link TicketOrderEvent} to the configured RabbitMQ exchange.
-     * 
+     * <p>
      * Protected by a circuit breaker and a retry mechanism.
-     * The retry is executed inside the circuit breaker window 
-     * 
+     * The retry is executed inside the circuit breaker window
+     *
      * @param event the ticket order event to publish
      */
     @CircuitBreaker(name = "rabbitmq")

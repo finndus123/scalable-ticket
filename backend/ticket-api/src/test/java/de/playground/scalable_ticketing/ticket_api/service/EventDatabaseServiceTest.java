@@ -8,8 +8,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.Optional;
 import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
@@ -21,13 +23,11 @@ import static org.mockito.Mockito.when;
 @DisplayName("EventDatabaseService")
 class EventDatabaseServiceTest {
 
+    private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
     @Mock
     private EventRepository eventRepository;
-
     @InjectMocks
     private EventDatabaseService eventDatabaseService;
-
-    private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
 
     @Test
     @DisplayName("returns the available ticket count when event is found")
