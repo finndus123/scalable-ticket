@@ -30,7 +30,8 @@ public class EventService {
     public EventService(
             EventCacheService eventCacheService,
             EventDatabaseService eventDatabaseService,
-            EventMessagingService eventMessagingService) {
+            EventMessagingService eventMessagingService
+    ) {
         this.eventCacheService = eventCacheService;
         this.eventDatabaseService = eventDatabaseService;
         this.eventMessagingService = eventMessagingService;

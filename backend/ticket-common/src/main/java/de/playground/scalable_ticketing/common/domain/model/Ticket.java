@@ -6,6 +6,8 @@ import java.util.UUID;
 
 /**
  * Domain Entity representing a single Ticket.
+ * Tickets are created during event creation and assigned to an order upon purchase.
+ * Uses optimistic locking via {@code @Version} to prevent concurrent assignment conflicts.
  */
 @Entity
 @Table(name = "tickets")
@@ -36,43 +38,40 @@ public class Ticket {
         this.status = status;
     }
 
-    public UUID getId() {
-        return id;
+    /**
+     * Assigns this ticket to an order, transitioning its status to SOLD.
+     * Enforces business rule: only AVAILABLE tickets can be sold.
+     *
+     * @param orderId the ID of the order this ticket is assigned to
+     * @throws IllegalStateException if the ticket is not in AVAILABLE status
+     */
+    public void assignToOrder(UUID orderId) {
+        if (this.status != TicketStatus.AVAILABLE) {
+            throw new IllegalStateException(
+                    "Ticket " + this.id + " cannot be assigned: current status is " + this.status
+            );
+        }
+        this.status = TicketStatus.SOLD;
+        this.orderId = orderId;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public UUID getId() {
+        return id;
     }
 
     public UUID getEventId() {
         return eventId;
     }
 
-    public void setEventId(UUID eventId) {
-        this.eventId = eventId;
-    }
-
     public TicketStatus getStatus() {
         return status;
-    }
-
-    public void setStatus(TicketStatus status) {
-        this.status = status;
     }
 
     public UUID getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(UUID orderId) {
-        this.orderId = orderId;
-    }
-
     public Long getVersion() {
         return version;
-    }
-
-    public void setVersion(Long version) {
-        this.version = version;
     }
 }

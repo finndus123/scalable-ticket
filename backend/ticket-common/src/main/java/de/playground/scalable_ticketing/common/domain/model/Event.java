@@ -55,47 +55,39 @@ public class Event {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getLocation() {
         return location;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
     public Integer getTotalAllocation() {
         return totalAllocation;
-    }
-
-    public void setTotalAllocation(Integer totalAllocation) {
-        this.totalAllocation = totalAllocation;
     }
 
     public Integer getAvailableTickets() {
         return availableTickets;
     }
 
-    public void setAvailableTickets(Integer availableTickets) {
-        this.availableTickets = availableTickets;
+    /**
+     * Decrements the available ticket count by the given quantity.
+     * Enforces invariant: available tickets cannot go below zero.
+     *
+     * @param quantity the number of tickets to subtract from availability
+     * @throws IllegalStateException if the remaining tickets would be negative
+     */
+    public void decrementAvailableTickets(int quantity) {
+        if (this.availableTickets < quantity) {
+            throw new IllegalStateException(
+                    "Cannot decrement by " + quantity + ": only " + this.availableTickets + " tickets available for event " + this.id
+            );
+        }
+        this.availableTickets -= quantity;
     }
 
     public BigDecimal getPrice() {
         return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
     }
 }

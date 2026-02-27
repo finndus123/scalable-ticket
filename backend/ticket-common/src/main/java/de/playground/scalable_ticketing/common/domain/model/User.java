@@ -23,6 +23,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private NotificationType  notificationPreference;
+
     public User() {
     }
 
@@ -30,6 +33,7 @@ public class User {
         this.id = id;
         this.name = name;
         this.email = email;
+        this.notificationPreference = NotificationType.EMAIL;
     }
 
     public UUID getId() {
@@ -54,5 +58,13 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public NotificationType getNotificationPreference() {
+        return notificationPreference;
+    }
+
+    public void setNotificationPreference(NotificationType notificationPreference) {
+        this.notificationPreference = notificationPreference;
     }
 }

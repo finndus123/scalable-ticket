@@ -22,8 +22,11 @@ public class Order {
     @Column(name = "event_id", nullable = false)
     private UUID eventId;
 
-    @Column(name = "total_amount", nullable = false)
-    private BigDecimal totalAmount;
+    @Column(nullable = false)
+    private int quantity;
+
+    @Column(nullable = false)
+    private BigDecimal price;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -39,14 +42,16 @@ public class Order {
             UUID id,
             UUID userId,
             UUID eventId,
-            BigDecimal totalAmount,
+            int quantity,
+            BigDecimal price,
             Instant createdAt,
             OrderStatus status
     ) {
         this.id = id;
         this.userId = userId;
         this.eventId = eventId;
-        this.totalAmount = totalAmount;
+        this.quantity = quantity;
+        this.price = price;
         this.createdAt = createdAt;
         this.status = status;
     }
@@ -75,27 +80,31 @@ public class Order {
         this.eventId = eventId;
     }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public BigDecimal getTotalPrice() {
+        return BigDecimal.valueOf(quantity).multiply(price);
     }
 
     public Instant getCreatedAt() {
         return createdAt;
     }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
+    
     public OrderStatus getStatus() {
         return status;
     }
 
-    public void setStatus(OrderStatus status) {
-        this.status = status;
+    /**
+     * Transitions the order to a new status.
+     * Only allows valid transitions: {@code PENDING → COMPLETED} and {@code PENDING → FAILED}.
+     *
+     * @param newStatus the target status to transition to
+     * @throws IllegalStateException if the transition is not allowed
+     */
+    public void setStatus(OrderStatus newStatus) {
+        if (this.status != OrderStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Order " + this.id + " cannot transition from " + this.status + " to " + newStatus
+            );
+        }
+        this.status = newStatus;
     }
 }
