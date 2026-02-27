@@ -22,10 +22,10 @@ import static org.mockito.Mockito.mock;
 
 
 /**
- * Test configuration for setting up test infrastructure including Redis and RabbitMQ.
- * 
- * Redis is started using Testcontainers.
- * RabbitMQ is mocked using Mockito.
+ * Test configuration for setting up test infrastructure for Integration-SpringBootTests
+ * Config includes Redis and RabbitMQ:
+ * - Redis is started using Testcontainers.
+ * - RabbitMQ is mocked using Mockito.
  */
 @TestConfiguration
 public class TestInfrastructureConfig {

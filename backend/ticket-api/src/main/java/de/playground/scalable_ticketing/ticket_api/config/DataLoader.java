@@ -49,10 +49,9 @@ public class DataLoader implements CommandLineRunner {
             userRepository.saveAll(List.of(mrBurns, homer));
 
             UUID krustyShowId = UUID.randomUUID();
-            Event krustyShow = new Event(krustyShowId, "Krusty the Clown Show", "Channel 6 Studios", 10000, 10000, BigDecimal.valueOf(15.00));
+            Event krustyShow = new Event(krustyShowId, "Krusty the Clown Show", "Channel 6 Studios", 50000, 50000, BigDecimal.valueOf(15.00));
             eventRepository.save(krustyShow);
 
-            // Todo: Simplify Example by creating tickets after order creation
             List<Ticket> tickets = new ArrayList<>();
             for(int i = 0; i < krustyShow.getAvailableTickets(); i++) {
                 tickets.add(new Ticket(UUID.randomUUID(), krustyShowId, TicketStatus.AVAILABLE));
