@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,7 +29,6 @@ public class WorkerCacheService {
      * @param eventId the ID of the event to invalidate
      */
     @CircuitBreaker(name = "redis", fallbackMethod = "fallbackInvalidate")
-    @TimeLimiter(name = "redis")
     public void invalidateAvailabilityCache(String eventId) {
         String cacheKey = String.format(CACHE_KEY_PATTERN, eventId);
         redisTemplate.delete(cacheKey);

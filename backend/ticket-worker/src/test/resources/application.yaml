@@ -40,11 +40,6 @@ resilience4j:
         maxConcurrentCalls: 30
         maxWaitDuration: 50ms
 
-  timelimiter:
-    instances:
-      redis:
-        timeoutDuration: 500ms
-
 # RabbitMQ Config (custom fields)
 rabbitmq:
   exchange: ticket.exchange.test

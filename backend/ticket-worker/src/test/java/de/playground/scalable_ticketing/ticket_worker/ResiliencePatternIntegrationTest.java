@@ -21,6 +21,7 @@ import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ class ResiliencePatternIntegrationTest {
     @MockitoBean
     private EventRepository eventRepository;
 
-    @MockitoBean
+    @MockitoSpyBean
     private RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
