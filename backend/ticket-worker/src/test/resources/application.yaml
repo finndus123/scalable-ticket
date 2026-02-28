@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ticket-api-test
+    name: ticket-worker-test
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -32,11 +32,7 @@ resilience4j:
         # Ignore custom exceptions – must NOT trigger the circuit breaker
         ignoreExceptions:
           - de.playground.scalable_ticketing.common.exception.EventNotFoundException
-
-      rabbitmq:
-        slidingWindowSize: 5
-        failureRateThreshold: 50
-        waitDurationInOpenState: 5s
+          - de.playground.scalable_ticketing.common.exception.UserNotFoundException
 
   bulkhead:
     instances:
@@ -44,18 +40,14 @@ resilience4j:
         maxConcurrentCalls: 30
         maxWaitDuration: 50ms
 
-  retry:
+  timelimiter:
     instances:
-      rabbitmq:
-        maxAttempts: 3
-        waitDuration: 100ms
-        retryExceptions:
-          - org.springframework.amqp.AmqpException
-          - java.io.IOException
+      redis:
+        timeoutDuration: 500ms
 
 # RabbitMQ Config (custom fields)
 rabbitmq:
   exchange: ticket.exchange.test
   queue: ticket.order.queue.test
-  routing:
-    key: ticket.order.created.test
+  routing-key: ticket.order.#.test
+  prefetch-count: 1

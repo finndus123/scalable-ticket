@@ -28,7 +28,7 @@ import static org.mockito.Mockito.mock;
  * - RabbitMQ is mocked using Mockito.
  */
 @TestConfiguration
-public class TestInfrastructureConfig {
+public class TestApiInfrastructureConfig {
 
     @Bean
     public TestRabbitTemplate template() throws IOException {

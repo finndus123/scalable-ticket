@@ -3,7 +3,7 @@ package de.playground.scalable_ticketing.ticket_api;
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.ticket_api.config.TestInfrastructureConfig;
+import de.playground.scalable_ticketing.ticket_api.config.TestApiInfrastructureConfig;
 import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
 import de.playground.scalable_ticketing.ticket_api.service.EventMessagingService;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
@@ -39,8 +39,8 @@ import static org.mockito.Mockito.*;
  * The focus is on {@link EventNotFoundException} does <strong>not</strong> trigger the database circuit breaker, will be expanded in the future.
  */
 @SpringBootTest
-@Import(TestInfrastructureConfig.class)
-@ContextConfiguration(initializers = TestInfrastructureConfig.RedisInitializer.class)
+@Import(TestApiInfrastructureConfig.class)
+@ContextConfiguration(initializers = TestApiInfrastructureConfig.RedisInitializer.class)
 @DisplayName("Resilience Pattern Integration Tests")
 class ResiliencePatternIntegrationTest {
 

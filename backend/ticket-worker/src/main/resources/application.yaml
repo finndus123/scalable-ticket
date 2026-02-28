@@ -7,11 +7,15 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 3000
   # Redis Config
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 100ms
   # RabbitMQ Config
   rabbitmq:
     host: ${RABBITMQ_HOST}
@@ -50,7 +54,7 @@ resilience4j:
       redis:
         timeoutDuration: 500ms
 
-# RabbitMQ Config
+# RabbitMQ Config (custom fields)
 rabbitmq:
   exchange: ticket.exchange
   queue: ticket.order.queue
