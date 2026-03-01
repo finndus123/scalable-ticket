@@ -1,12 +1,19 @@
 package de.playground.scalable_ticketing.ticket_worker.service;
 
-import de.playground.scalable_ticketing.common.domain.model.Event;
-import de.playground.scalable_ticketing.common.domain.model.NotificationType;
-import de.playground.scalable_ticketing.common.domain.model.Order;
-import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
-import de.playground.scalable_ticketing.common.domain.model.User;
-import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
-import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,13 +23,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import de.playground.scalable_ticketing.common.domain.model.Event;
+import de.playground.scalable_ticketing.common.domain.model.Order;
+import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
+import de.playground.scalable_ticketing.common.domain.model.User;
+import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
+import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventWorkerService Unit Tests")

@@ -3,7 +3,8 @@
 CREATE TABLE users (
     id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE
+    email VARCHAR(255) NOT NULL UNIQUE,
+    notification_preference SMALLINT NOT NULL
 );
 
 CREATE TABLE events (
@@ -19,7 +20,8 @@ CREATE TABLE orders (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     event_id UUID NOT NULL,
-    total_amount DECIMAL(10, 2) NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     status VARCHAR(50) NOT NULL,
     CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES users(id),
