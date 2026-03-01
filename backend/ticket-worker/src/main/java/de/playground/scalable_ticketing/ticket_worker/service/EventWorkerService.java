@@ -68,8 +68,7 @@ public class EventWorkerService {
                         UUID.fromString(ticketOrder.eventId()),
                         ticketOrder.quantity(),
                         event.getPrice(),
-                        Instant.parse(ticketOrder.timestamp()),
-                        OrderStatus.PENDING
+                        Instant.parse(ticketOrder.timestamp())
                 )
         );
 

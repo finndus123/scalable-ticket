@@ -82,8 +82,7 @@ class EventWorkerServiceTest {
                 eventId,
                 2,
                 BigDecimal.valueOf(50.0),
-                Instant.parse(sampleOrderEvent.timestamp()),
-                OrderStatus.PENDING
+                Instant.parse(sampleOrderEvent.timestamp())
         );
     }
 

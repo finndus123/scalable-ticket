@@ -112,7 +112,7 @@ class WorkerDatabaseServiceTest {
     @DisplayName("Should correctly save an Order")
     void shouldSaveOrder() {
         // Arrange
-        Order order = new Order(UUID.randomUUID(), userId, eventId, 2, BigDecimal.TEN, Instant.now(), OrderStatus.PENDING);
+        Order order = new Order(UUID.randomUUID(), userId, eventId, 2, BigDecimal.TEN, Instant.now());
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
         // Act
