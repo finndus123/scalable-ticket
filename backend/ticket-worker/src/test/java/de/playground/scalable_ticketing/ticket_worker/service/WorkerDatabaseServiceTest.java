@@ -1,16 +1,13 @@
 package de.playground.scalable_ticketing.ticket_worker.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-
+import de.playground.scalable_ticketing.common.domain.model.Event;
+import de.playground.scalable_ticketing.common.domain.model.Order;
+import de.playground.scalable_ticketing.common.domain.model.User;
+import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
+import de.playground.scalable_ticketing.common.domain.repository.OrderRepository;
+import de.playground.scalable_ticketing.common.domain.repository.UserRepository;
+import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,15 +16,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.playground.scalable_ticketing.common.domain.model.Event;
-import de.playground.scalable_ticketing.common.domain.model.Order;
-import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
-import de.playground.scalable_ticketing.common.domain.model.User;
-import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
-import de.playground.scalable_ticketing.common.domain.repository.OrderRepository;
-import de.playground.scalable_ticketing.common.domain.repository.UserRepository;
-import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
-import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WorkerDatabaseService Unit Tests")

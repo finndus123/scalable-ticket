@@ -18,7 +18,6 @@ import de.playground.scalable_ticketing.ticket_worker.service.notification.Order
 /**
  * Service responsible for consuming ticket order events from RabbitMQ
  * and orchestrating the complete booking flow.
- *
  * Flow:
  * <ol>
  *   <li>Validate user and event existence</li>
