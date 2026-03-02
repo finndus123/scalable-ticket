@@ -1,7 +1,6 @@
 package de.playground.scalable_ticketing.ticket_worker.service;
 
 import de.playground.scalable_ticketing.common.domain.model.Event;
-import de.playground.scalable_ticketing.common.domain.model.NotificationType;
 import de.playground.scalable_ticketing.common.domain.model.Order;
 import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
 import de.playground.scalable_ticketing.common.domain.model.User;
