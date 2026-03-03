@@ -44,8 +44,7 @@ public class Order {
             UUID eventId,
             int quantity,
             BigDecimal price,
-            Instant createdAt,
-            OrderStatus status
+            Instant createdAt
     ) {
         this.id = id;
         this.userId = userId;
@@ -53,7 +52,7 @@ public class Order {
         this.quantity = quantity;
         this.price = price;
         this.createdAt = createdAt;
-        this.status = status;
+        this.status = OrderStatus.PENDING;
     }
 
     public UUID getId() {

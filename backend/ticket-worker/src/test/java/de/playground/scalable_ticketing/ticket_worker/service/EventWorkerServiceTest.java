@@ -77,8 +77,7 @@ class EventWorkerServiceTest {
                 eventId,
                 2,
                 BigDecimal.valueOf(50.0),
-                Instant.parse(sampleOrderEvent.timestamp()),
-                OrderStatus.PENDING
+                Instant.parse(sampleOrderEvent.timestamp())
         );
     }
 
@@ -101,7 +100,7 @@ class EventWorkerServiceTest {
         ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
         verify(databaseService, times(2)).saveOrder(orderCaptor.capture());
         
-        Order firstSavedOrder = orderCaptor.getAllValues().get(0);
+        Order firstSavedOrder = orderCaptor.getAllValues().getFirst();
         assertThat(firstSavedOrder.getStatus()).isEqualTo(OrderStatus.PENDING);
 
         // Verify assignment and cache invalidation
