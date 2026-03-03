@@ -40,6 +40,14 @@ resilience4j:
         maxConcurrentCalls: 30
         maxWaitDuration: 50ms
 
+  retry:
+    instances:
+      database:
+        maxAttempts: 4
+        waitDuration: 100ms
+        retryExceptions:
+          - org.springframework.dao.OptimisticLockingFailureException
+
 # RabbitMQ Config (custom fields)
 rabbitmq:
   exchange: ticket.exchange.test

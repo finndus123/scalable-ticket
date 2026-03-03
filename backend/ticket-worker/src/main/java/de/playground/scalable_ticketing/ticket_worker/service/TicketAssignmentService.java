@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +15,7 @@ import de.playground.scalable_ticketing.common.domain.repository.TicketRepositor
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 /**
  * Service responsible for assigning available tickets to an order.
@@ -42,11 +42,7 @@ public class TicketAssignmentService {
      * @throws InsufficientTicketsException      if fewer tickets are available than requested
      * @throws OptimisticLockingFailureException if all retry attempts are exhausted
      */
-    @Retryable(
-            maxRetries = 3,
-            includes = OptimisticLockingFailureException.class,
-            delay = 100
-    )
+    @Retry(name = "database")
     @CircuitBreaker(name = "database")
     @Bulkhead(name = "database")
     @Transactional
