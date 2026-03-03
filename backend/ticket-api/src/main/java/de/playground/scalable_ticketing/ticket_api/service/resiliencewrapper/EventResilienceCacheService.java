@@ -1,5 +1,6 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
+import de.playground.scalable_ticketing.ticket_api.service.EventApiService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,22 +11,22 @@ import java.time.Duration;
 import java.util.Optional;
 
 /**
- * Service encapsulating all Redis cache interactions for event data.
+ * Service encapsulating all Redis cache interactions for event data with resilience annotations.
  * <p>
- * Separated from {@link EventService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
+ * Separated from {@link EventApiService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
  * Circuit-breaker instance: "redis"
  */
 @Service
-public class EventCacheService {
+public class EventResilienceCacheService {
 
     private static final String CACHE_KEY_FORMAT = "event:%s:availability";
     private static final Duration CACHE_TTL = Duration.ofSeconds(10);
 
-    private static final Logger logger = LoggerFactory.getLogger(EventCacheService.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventResilienceCacheService.class);
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public EventCacheService(RedisTemplate<String, Object> redisTemplate) {
+    public EventResilienceCacheService(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

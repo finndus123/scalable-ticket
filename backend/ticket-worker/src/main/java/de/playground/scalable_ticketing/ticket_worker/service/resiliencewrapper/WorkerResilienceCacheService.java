@@ -1,9 +1,9 @@
-package de.playground.scalable_ticketing.ticket_worker.service;
+package de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
 /**
@@ -11,14 +11,14 @@ import org.springframework.stereotype.Service;
  * Ensures the worker does not hang or fail if Redis is unavailable.
  */
 @Service
-public class WorkerCacheService {
+public class WorkerResilienceCacheService {
 
-    private static final Logger logger = LoggerFactory.getLogger(WorkerCacheService.class);
+    private static final Logger logger = LoggerFactory.getLogger(WorkerResilienceCacheService.class);
     private static final String CACHE_KEY_PATTERN = "event:%s:availability";
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    public WorkerCacheService(RedisTemplate<String, Object> redisTemplate) {
+    public WorkerResilienceCacheService(RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

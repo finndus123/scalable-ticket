@@ -4,7 +4,7 @@ import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
 import de.playground.scalable_ticketing.ticket_api.exception.GlobalExceptionHandler;
-import de.playground.scalable_ticketing.ticket_api.service.EventService;
+import de.playground.scalable_ticketing.ticket_api.service.EventApiService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>
  * Only the web layer is loaded for this test.
  * Tests include: Basic functionality of handing requests to Service, validation of requests and error handling.
- * {@link EventService} is replaced by a Mockito mock so no infrastructure (Redis, RabbitMQ, DB) is required.
+ * {@link EventApiService} is replaced by a Mockito mock so no infrastructure (Redis, RabbitMQ, DB) is required.
  */
 @WebMvcTest(controllers = {EventController.class, GlobalExceptionHandler.class})
 class EventControllerTest {
@@ -44,7 +44,7 @@ class EventControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private EventService eventService;
+    private EventApiService eventApiService;
 
     // -------------------------------------------------------------------------
     // GET /{eventId}/tickets/availability
@@ -59,7 +59,7 @@ class EventControllerTest {
         void shouldReturn200WithAvailabilityResponse() throws Exception {
             // given
             TicketAvailabilityResponse response = new TicketAvailabilityResponse(EVENT_ID, 150);
-            when(eventService.getAvailabilityCount(EVENT_ID)).thenReturn(response);
+            when(eventApiService.getAvailabilityCount(EVENT_ID)).thenReturn(response);
 
             // when / then
             mockMvc.perform(get(BASE_URL + "/{eventId}/tickets/availability", EVENT_ID)
@@ -69,14 +69,14 @@ class EventControllerTest {
                     .andExpect(jsonPath("$.eventId").value(EVENT_ID))
                     .andExpect(jsonPath("$.availableTickets").value(150));
 
-            verify(eventService).getAvailabilityCount(EVENT_ID);
+            verify(eventApiService).getAvailabilityCount(EVENT_ID);
         }
 
         @Test
         @DisplayName("404 Not Found - service throws EventNotFoundException")
         void shouldReturn404WhenEventNotFound() throws Exception {
             // given
-            when(eventService.getAvailabilityCount(EVENT_ID))
+            when(eventApiService.getAvailabilityCount(EVENT_ID))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
 
             // when / then
@@ -84,7 +84,7 @@ class EventControllerTest {
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
 
-            verify(eventService).getAvailabilityCount(EVENT_ID);
+            verify(eventApiService).getAvailabilityCount(EVENT_ID);
         }
 
         @Test
@@ -97,7 +97,7 @@ class EventControllerTest {
                             .accept(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).getAvailabilityCount(any());
+            verify(eventApiService, never()).getAvailabilityCount(any());
         }
     }
 
@@ -114,7 +114,7 @@ class EventControllerTest {
         void shouldReturn202ForValidOrder() throws Exception {
             // given
             TicketOrderRequest request = new TicketOrderRequest(USER_ID, 2, REQUEST_ID);
-            doNothing().when(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
+            doNothing().when(eventApiService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -122,7 +122,7 @@ class EventControllerTest {
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isAccepted());
 
-            verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
+            verify(eventApiService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
         }
 
         @Test
@@ -143,7 +143,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -164,7 +164,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -185,7 +185,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -206,7 +206,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -217,7 +217,7 @@ class EventControllerTest {
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
 
         @Test
@@ -230,7 +230,7 @@ class EventControllerTest {
                         "quantity": 1
                     }
                     """.formatted(USER_ID);
-            doNothing().when(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
+            doNothing().when(eventApiService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
 
             // when / then
             mockMvc.perform(post(BASE_URL + "/{eventId}/tickets/order", EVENT_ID)
@@ -238,7 +238,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isAccepted());
 
-            verify(eventService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
+            verify(eventApiService).createOrder(eq(EVENT_ID), any(TicketOrderRequest.class));
         }
 
         @Test
@@ -259,7 +259,7 @@ class EventControllerTest {
                             .content(json))
                     .andExpect(status().isBadRequest());
 
-            verify(eventService, never()).createOrder(any(), any());
+            verify(eventApiService, never()).createOrder(any(), any());
         }
     }
 }

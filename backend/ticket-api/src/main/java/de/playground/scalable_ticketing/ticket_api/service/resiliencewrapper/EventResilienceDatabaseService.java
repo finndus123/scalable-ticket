@@ -1,7 +1,8 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
+import de.playground.scalable_ticketing.ticket_api.service.EventApiService;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
@@ -11,20 +12,20 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 /**
- * Service encapsulating all database interactions for event data.
+ * Service encapsulating all database interactions for event data with resilience annotations.
  * <p>
- * Separated from {@link EventService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
+ * Separated from {@link EventApiService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
  * Circuit-breaker instance: "database" (ignores {@link EventNotFoundException})
  * Bulkhead instance: "database" (limits concurrent DB calls)
  */
 @Service
-public class EventDatabaseService {
+public class EventResilienceDatabaseService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EventDatabaseService.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventResilienceDatabaseService.class);
 
     private final EventRepository eventRepository;
 
-    public EventDatabaseService(EventRepository eventRepository) {
+    public EventResilienceDatabaseService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
     }
 

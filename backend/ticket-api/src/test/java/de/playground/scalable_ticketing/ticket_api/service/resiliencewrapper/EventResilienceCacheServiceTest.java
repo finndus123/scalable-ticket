@@ -1,4 +1,4 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,11 +18,11 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link EventCacheService}.
+ * Unit tests for {@link EventResilienceCacheService}.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventCacheService")
-class EventCacheServiceTest {
+class EventResilienceCacheServiceTest {
 
     private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
     private static final String CACHE_KEY = "event:" + EVENT_ID + ":availability";
@@ -34,7 +34,7 @@ class EventCacheServiceTest {
     private ValueOperations<String, Object> valueOperations;
 
     @InjectMocks
-    private EventCacheService eventCacheService;
+    private EventResilienceCacheService eventResilienceCacheService;
 
     @Nested
     @DisplayName("getAvailabilityCountFromCache")
@@ -47,7 +47,7 @@ class EventCacheServiceTest {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.get(CACHE_KEY)).thenReturn(count);
 
-            Optional<Integer> result = eventCacheService.getAvailabilityCountFromCache(EVENT_ID);
+            Optional<Integer> result = eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID);
 
             assertThat(result).isPresent().contains(count);
         }
@@ -58,7 +58,7 @@ class EventCacheServiceTest {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.get(CACHE_KEY)).thenReturn(null);
 
-            Optional<Integer> result = eventCacheService.getAvailabilityCountFromCache(EVENT_ID);
+            Optional<Integer> result = eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID);
 
             assertThat(result).isEmpty();
         }
@@ -69,7 +69,7 @@ class EventCacheServiceTest {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             when(valueOperations.get(anyString())).thenThrow(new RuntimeException("Redis error"));
 
-            Optional<Integer> result = eventCacheService.getAvailabilityCountFromCache(EVENT_ID);
+            Optional<Integer> result = eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID);
 
             assertThat(result).isEmpty();
         }
@@ -85,7 +85,7 @@ class EventCacheServiceTest {
             when(redisTemplate.opsForValue()).thenReturn(valueOperations);
             int count = 100;
 
-            eventCacheService.writeAvailabilityCountToCache(EVENT_ID, count);
+            eventResilienceCacheService.writeAvailabilityCountToCache(EVENT_ID, count);
 
             verify(valueOperations).set(eq(CACHE_KEY), eq(count), any(Duration.class));
         }
@@ -98,7 +98,7 @@ class EventCacheServiceTest {
                     .set(anyString(), any(), any());
 
             // Should not throw
-            eventCacheService.writeAvailabilityCountToCache(EVENT_ID, 100);
+            eventResilienceCacheService.writeAvailabilityCountToCache(EVENT_ID, 100);
         }
     }
 
@@ -109,7 +109,7 @@ class EventCacheServiceTest {
         @Test
         @DisplayName("redisReadFallback returns empty Optional")
         void redisReadFallback() {
-            Optional<Integer> result = eventCacheService.redisReadFallback(EVENT_ID, new RuntimeException("test"));
+            Optional<Integer> result = eventResilienceCacheService.redisReadFallback(EVENT_ID, new RuntimeException("test"));
             assertThat(result).isEmpty();
         }
 
@@ -117,7 +117,7 @@ class EventCacheServiceTest {
         @DisplayName("redisWriteFallback does not throw")
         void redisWriteFallback() {
             // Should not throw
-            eventCacheService.redisWriteFallback(EVENT_ID, 100, new RuntimeException("test"));
+            eventResilienceCacheService.redisWriteFallback(EVENT_ID, 100, new RuntimeException("test"));
         }
     }
 }

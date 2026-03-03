@@ -6,6 +6,8 @@ import de.playground.scalable_ticketing.common.domain.model.OrderStatus;
 import de.playground.scalable_ticketing.common.domain.model.User;
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceCacheService;
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceDatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,10 +30,10 @@ import static org.mockito.Mockito.*;
 class EventWorkerServiceTest {
 
     @Mock
-    private WorkerDatabaseService databaseService;
+    private WorkerResilienceDatabaseService databaseService;
 
     @Mock
-    private WorkerCacheService cacheService;
+    private WorkerResilienceCacheService cacheService;
 
     @Mock
     private TicketAssignmentService ticketAssignmentService;

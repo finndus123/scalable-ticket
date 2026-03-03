@@ -2,8 +2,8 @@ package de.playground.scalable_ticketing.ticket_worker.service;
 
 import de.playground.scalable_ticketing.common.domain.model.Ticket;
 import de.playground.scalable_ticketing.common.domain.model.TicketStatus;
-import de.playground.scalable_ticketing.common.domain.repository.TicketRepository;
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceDatabaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 class TicketAssignmentServiceTest {
 
     @Mock
-    private TicketRepository ticketRepository;
+    private WorkerResilienceDatabaseService databaseService;
 
     @InjectMocks
     private TicketAssignmentService ticketAssignmentService;
@@ -53,20 +53,20 @@ class TicketAssignmentServiceTest {
         Ticket ticket2 = new Ticket(UUID.randomUUID(), eventId, TicketStatus.AVAILABLE);
         List<Ticket> availableTickets = Arrays.asList(ticket1, ticket2);
 
-        when(ticketRepository.findAvailableByEventId(eq(eventId), any(Pageable.class)))
+        when(databaseService.findAvailableTickets(eq(eventId), any(Pageable.class)))
                 .thenReturn(availableTickets);
 
         // Act
         ticketAssignmentService.assignTickets(eventId, orderId, 2);
 
         // Assert
-        verify(ticketRepository).findAvailableByEventId(eventId, PageRequest.of(0, 2));
+        verify(databaseService).findAvailableTickets(eventId, PageRequest.of(0, 2));
 
         assertThat(ticket1.getOrderId()).isEqualTo(orderId);
         assertThat(ticket2.getOrderId()).isEqualTo(orderId);
 
-        ArgumentCaptor<List<Ticket>> captor = ArgumentCaptor.forClass(List.class);
-        verify(ticketRepository).saveAll(captor.capture());
+        ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+        verify(databaseService).saveAllTickets(captor.capture());
 
         List<Ticket> savedTickets = captor.getValue();
         assertThat(savedTickets).hasSize(2)
@@ -80,7 +80,7 @@ class TicketAssignmentServiceTest {
         Ticket ticket1 = new Ticket(UUID.randomUUID(), eventId, TicketStatus.AVAILABLE);
         List<Ticket> availableTickets = List.of(ticket1);
 
-        when(ticketRepository.findAvailableByEventId(eq(eventId), any(Pageable.class)))
+        when(databaseService.findAvailableTickets(eq(eventId), any(Pageable.class)))
                 .thenReturn(availableTickets);
 
         // Act & Assert

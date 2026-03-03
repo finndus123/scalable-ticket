@@ -24,7 +24,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Test configuration for setting up test infrastructure for Integration-SpringBootTests
  * Config includes Redis and RabbitMQ:
- * - Redis is started using Testcontainers.
+ * - Redis is started using Testcontainers (requires docker)
  * - RabbitMQ is mocked using Mockito.
  */
 @TestConfiguration

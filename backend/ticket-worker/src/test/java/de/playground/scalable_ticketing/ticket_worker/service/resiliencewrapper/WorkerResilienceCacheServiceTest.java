@@ -1,4 +1,4 @@
-package de.playground.scalable_ticketing.ticket_worker.service;
+package de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,13 +15,13 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WorkerCacheService Unit Tests")
-class WorkerCacheServiceTest {
+class WorkerResilienceCacheServiceTest {
 
     @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
-    private WorkerCacheService workerCacheService;
+    private WorkerResilienceCacheService workerResilienceCacheService;
 
     @Test
     @DisplayName("Should invalidate availability cache using the correct key pattern")
@@ -31,7 +31,7 @@ class WorkerCacheServiceTest {
         String expectedCacheKey = "event:" + eventId + ":availability";
 
         // Act
-        workerCacheService.invalidateAvailabilityCache(eventId);
+        workerResilienceCacheService.invalidateAvailabilityCache(eventId);
 
         // Assert
         verify(redisTemplate).delete(expectedCacheKey);
@@ -45,7 +45,7 @@ class WorkerCacheServiceTest {
         RuntimeException dummyException = new RuntimeException("Redis connection timeout");
 
         // Act & Assert
-        assertThatCode(() -> workerCacheService.fallbackInvalidate(eventId, dummyException))
+        assertThatCode(() -> workerResilienceCacheService.fallbackInvalidate(eventId, dummyException))
                 .doesNotThrowAnyException();
     }
 }

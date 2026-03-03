@@ -4,8 +4,8 @@ import de.playground.scalable_ticketing.common.domain.repository.EventRepository
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.ticket_api.config.TestApiInfrastructureConfig;
-import de.playground.scalable_ticketing.ticket_api.service.EventDatabaseService;
-import de.playground.scalable_ticketing.ticket_api.service.EventMessagingService;
+import de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper.EventResilienceDatabaseService;
+import de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper.EventResilienceMessagingService;
 import io.github.resilience4j.bulkhead.BulkheadFullException;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
@@ -34,9 +34,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Integration test verifying that resilience4j patterns (circuit breakers, bulkheads, retries) are correctly wired via Spring AOP proxies.
- * <p>
- * The focus is on {@link EventNotFoundException} does <strong>not</strong> trigger the database circuit breaker, will be expanded in the future.
+ * Integration test verifying that resilience4j patterns (circuit breakers, bulkheads, retries) are correctly configured.
  */
 @SpringBootTest
 @Import(TestApiInfrastructureConfig.class)
@@ -66,10 +64,10 @@ class ResiliencePatternIntegrationTest {
     // -------------------------------------------------------------------------
 
     @Autowired
-    private EventDatabaseService eventDatabaseService;
+    private EventResilienceDatabaseService eventResilienceDatabaseService;
 
     @Autowired
-    private EventMessagingService eventMessagingService;
+    private EventResilienceMessagingService eventResilienceMessagingService;
 
     @Autowired
     private CircuitBreakerRegistry circuitBreakerRegistry;
@@ -110,7 +108,7 @@ class ResiliencePatternIntegrationTest {
             int callCount = 10;
             for (int i = 0; i < callCount; i++) {
                 try {
-                    eventDatabaseService.findAvailableTickets(NON_EXISTENT_EVENT_ID);
+                    eventResilienceDatabaseService.findAvailableTickets(NON_EXISTENT_EVENT_ID);
                 } catch (EventNotFoundException ignored) {
                     // Expected – event does not exist, but this must not trip the circuit breaker
                 }
@@ -153,7 +151,7 @@ class ResiliencePatternIntegrationTest {
             int callCount = 6;
             for (int i = 0; i < callCount; i++) {
                 try {
-                    eventDatabaseService.findAvailableTickets(EXISTING_EVENT_ID);
+                    eventResilienceDatabaseService.findAvailableTickets(EXISTING_EVENT_ID);
                 } catch (RuntimeException ignored) {
                     // Expected – infrastructure failure
                 }
@@ -195,7 +193,7 @@ class ResiliencePatternIntegrationTest {
                 futures.add(executorService.submit(() -> {
                     startLatch.await(); // wait for all threads to start at the same time
                     try {
-                        return eventDatabaseService.findAvailableTickets(EXISTING_EVENT_ID);
+                        return eventResilienceDatabaseService.findAvailableTickets(EXISTING_EVENT_ID);
                     } finally {
                         finishLatch.countDown();
                     }
@@ -244,7 +242,7 @@ class ResiliencePatternIntegrationTest {
             TicketOrderEvent event = new TicketOrderEvent("req-1", EXISTING_EVENT_ID, "user-1", 2, Instant.now().toString());
 
             // when / then
-            assertThatThrownBy(() -> eventMessagingService.sendOrderEvent(event))
+            assertThatThrownBy(() -> eventResilienceMessagingService.sendOrderEvent(event))
                     .isInstanceOf(AmqpException.class);
 
             // verify that it was retried
@@ -262,7 +260,7 @@ class ResiliencePatternIntegrationTest {
             TicketOrderEvent event = new TicketOrderEvent("req-2", EXISTING_EVENT_ID, "user-2", 1, Instant.now().toString());
 
             // when 
-            eventMessagingService.sendOrderEvent(event);
+            eventResilienceMessagingService.sendOrderEvent(event);
 
             // then – no exception thrown, and rabbitTemplate was called exactly twice
             verify(rabbitTemplate, times(2)).convertAndSend(anyString(), anyString(), eq(event));

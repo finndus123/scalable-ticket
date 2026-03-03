@@ -3,6 +3,8 @@ package de.playground.scalable_ticketing.ticket_worker.service;
 import java.time.Instant;
 import java.util.UUID;
 
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceCacheService;
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,29 +19,20 @@ import de.playground.scalable_ticketing.ticket_worker.service.notification.Order
 
 /**
  * Service responsible for consuming ticket order events from RabbitMQ
- * and orchestrating the complete booking flow.
- *
- * Flow:
- * <ol>
- *   <li>Validate user and event existence</li>
- *   <li>Create a PENDING order</li>
- *   <li>Assign tickets via {@link TicketAssignmentService} (retryable)</li>
- *   <li>Decrement event availability and invalidate Redis cache</li>
- *   <li>Mark order as COMPLETED or FAILED and notify the user</li>
- * </ol>
+ * and orchestrating the complete booking flow
  */
 @Service
 public class EventWorkerService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventWorkerService.class);
 
-    private final WorkerDatabaseService databaseService;
-    private final WorkerCacheService cacheService;
+    private final WorkerResilienceDatabaseService databaseService;
+    private final WorkerResilienceCacheService cacheService;
     private final TicketAssignmentService ticketAssignmentService;
 
     public EventWorkerService(
-            WorkerDatabaseService databaseService,
-            WorkerCacheService cacheService,
+            WorkerResilienceDatabaseService databaseService,
+            WorkerResilienceCacheService cacheService,
             TicketAssignmentService ticketAssignmentService
     ) {
         this.databaseService = databaseService;
@@ -50,6 +43,14 @@ public class EventWorkerService {
     /**
      * Listens to the ticket order queue and processes incoming purchase events.
      * Creates an order in PENDING state, attempts to assign tickets, and transitions the order to COMPLETED or FAILED depending on the outcome.
+     * Flow:
+     *   <ol>
+     *     <li>Validate user and event existence</li>
+     *     <li>Create a PENDING order</li>
+     *     <li>Assign tickets via {@link TicketAssignmentService} </li>
+     *     <li>Decrement event availability and invalidate Redis cache</li>
+     *     <li>Mark order as COMPLETED or FAILED and notify the user</li>
+     *   </ol>
      *
      * @param ticketOrder the received ticket order event from RabbitMQ
      */

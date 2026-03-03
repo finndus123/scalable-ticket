@@ -1,4 +1,4 @@
-package de.playground.scalable_ticketing.ticket_worker.service;
+package de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,7 +31,7 @@ import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("WorkerDatabaseService Unit Tests")
-class WorkerDatabaseServiceTest {
+class WorkerResilienceDatabaseServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -43,7 +43,7 @@ class WorkerDatabaseServiceTest {
     private OrderRepository orderRepository;
 
     @InjectMocks
-    private WorkerDatabaseService workerDatabaseService;
+    private WorkerResilienceDatabaseService workerResilienceDatabaseService;
 
     private UUID userId;
     private UUID eventId;
@@ -62,7 +62,7 @@ class WorkerDatabaseServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
 
         // Act
-        User actualUser = workerDatabaseService.getUserOrThrow(userId);
+        User actualUser = workerResilienceDatabaseService.getUserOrThrow(userId);
 
         // Assert
         assertThat(actualUser).isEqualTo(expectedUser);
@@ -76,7 +76,7 @@ class WorkerDatabaseServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> workerDatabaseService.getUserOrThrow(userId))
+        assertThatThrownBy(() -> workerResilienceDatabaseService.getUserOrThrow(userId))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasMessageContaining(userId.toString());
     }
@@ -89,7 +89,7 @@ class WorkerDatabaseServiceTest {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(expectedEvent));
 
         // Act
-        Event actualEvent = workerDatabaseService.getEventOrThrow(eventId);
+        Event actualEvent = workerResilienceDatabaseService.getEventOrThrow(eventId);
 
         // Assert
         assertThat(actualEvent).isEqualTo(expectedEvent);
@@ -103,7 +103,7 @@ class WorkerDatabaseServiceTest {
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> workerDatabaseService.getEventOrThrow(eventId))
+        assertThatThrownBy(() -> workerResilienceDatabaseService.getEventOrThrow(eventId))
                 .isInstanceOf(EventNotFoundException.class)
                 .hasMessageContaining(eventId.toString());
     }
@@ -116,7 +116,7 @@ class WorkerDatabaseServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
         // Act
-        Order savedOrder = workerDatabaseService.saveOrder(order);
+        Order savedOrder = workerResilienceDatabaseService.saveOrder(order);
 
         // Assert
         assertThat(savedOrder).isEqualTo(order);
@@ -131,7 +131,7 @@ class WorkerDatabaseServiceTest {
         when(eventRepository.save(any(Event.class))).thenReturn(event);
 
         // Act
-        Event savedEvent = workerDatabaseService.saveEvent(event);
+        Event savedEvent = workerResilienceDatabaseService.saveEvent(event);
 
         // Assert
         assertThat(savedEvent).isEqualTo(event);

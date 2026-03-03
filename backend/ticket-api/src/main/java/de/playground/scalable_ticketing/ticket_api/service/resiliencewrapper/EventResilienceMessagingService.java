@@ -1,6 +1,7 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
+import de.playground.scalable_ticketing.ticket_api.service.EventApiService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
@@ -10,15 +11,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Service encapsulating all RabbitMQ messaging interactions for ticket orders.
- * Separated from {@link EventService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
+ * Service encapsulating all RabbitMQ messaging interactions for ticket orders with resilience annotations.
+ * Separated from {@link EventApiService} so that resilience4j annotations are applied via Spring AOP proxy (avoids the self-invocation problem).
  * Circuit-breaker instance: "rabbitmq"
  * Retry instance: "rabbitmq" (retries on AmqpException and IOException)
  */
 @Service
-public class EventMessagingService {
+public class EventResilienceMessagingService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EventMessagingService.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventResilienceMessagingService.class);
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -28,7 +29,7 @@ public class EventMessagingService {
     @Value("${rabbitmq.routing.key:ticket.order.created}")
     private String routingKey;
 
-    public EventMessagingService(RabbitTemplate rabbitTemplate) {
+    public EventResilienceMessagingService(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 

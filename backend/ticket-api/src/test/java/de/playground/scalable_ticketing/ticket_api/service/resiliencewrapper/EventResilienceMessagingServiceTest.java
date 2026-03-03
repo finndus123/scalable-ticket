@@ -1,4 +1,4 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
 import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,23 +17,23 @@ import static org.mockito.Mockito.verify;
 
 
 /**
- * Unit tests for {@link EventMessagingService}.
+ * Unit tests for {@link EventResilienceMessagingService}.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventMessagingService")
-class EventMessagingServiceTest {
+class EventResilienceMessagingServiceTest {
 
     private static final String EXCHANGE = "test.exchange";
     private static final String ROUTING_KEY = "test.routing.key";
     @Mock
     private RabbitTemplate rabbitTemplate;
     @InjectMocks
-    private EventMessagingService eventMessagingService;
+    private EventResilienceMessagingService eventResilienceMessagingService;
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(eventMessagingService, "exchange", EXCHANGE);
-        ReflectionTestUtils.setField(eventMessagingService, "routingKey", ROUTING_KEY);
+        ReflectionTestUtils.setField(eventResilienceMessagingService, "exchange", EXCHANGE);
+        ReflectionTestUtils.setField(eventResilienceMessagingService, "routingKey", ROUTING_KEY);
     }
 
     @Test
@@ -45,7 +45,7 @@ class EventMessagingServiceTest {
         );
 
         // when
-        eventMessagingService.sendOrderEvent(event);
+        eventResilienceMessagingService.sendOrderEvent(event);
 
         // then
         verify(rabbitTemplate).convertAndSend(EXCHANGE, ROUTING_KEY, event);

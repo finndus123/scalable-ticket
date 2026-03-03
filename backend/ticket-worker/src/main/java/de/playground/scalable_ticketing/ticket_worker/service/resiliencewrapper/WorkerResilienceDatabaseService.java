@@ -1,10 +1,12 @@
-package de.playground.scalable_ticketing.ticket_worker.service;
+package de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper;
 
 import de.playground.scalable_ticketing.common.domain.model.Event;
 import de.playground.scalable_ticketing.common.domain.model.Order;
+import de.playground.scalable_ticketing.common.domain.model.Ticket;
 import de.playground.scalable_ticketing.common.domain.model.User;
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.domain.repository.OrderRepository;
+import de.playground.scalable_ticketing.common.domain.repository.TicketRepository;
 import de.playground.scalable_ticketing.common.domain.repository.UserRepository;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
@@ -12,8 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,22 +25,25 @@ import java.util.UUID;
  * Explicitly separated to allow Spring to apply `@CircuitBreaker` and `@Bulkhead` without self-invocation issues.
  */
 @Service
-public class WorkerDatabaseService {
+public class WorkerResilienceDatabaseService {
 
-    private static final Logger logger = LoggerFactory.getLogger(WorkerDatabaseService.class);
+    private static final Logger logger = LoggerFactory.getLogger(WorkerResilienceDatabaseService.class);
 
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final OrderRepository orderRepository;
+    private final TicketRepository ticketRepository;
 
-    public WorkerDatabaseService(
+    public WorkerResilienceDatabaseService(
             UserRepository userRepository,
             EventRepository eventRepository,
-            OrderRepository orderRepository
+            OrderRepository orderRepository,
+            TicketRepository ticketRepository
     ) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.orderRepository = orderRepository;
+        this.ticketRepository = ticketRepository;
     }
 
     @CircuitBreaker(name = "database")
@@ -70,4 +77,16 @@ public class WorkerDatabaseService {
     public Event saveEvent(Event event) {
         return eventRepository.save(event);
     }
+
+    @CircuitBreaker(name = "database")
+    @Bulkhead(name = "database")
+    public List<Ticket> findAvailableTickets(UUID eventId, Pageable pageable) {
+        return ticketRepository.findAvailableByEventId(eventId, pageable);
+    }
+
+     @CircuitBreaker(name = "database")
+     @Bulkhead(name = "database")
+     public void saveAllTickets(List<Ticket> tickets) {
+         ticketRepository.saveAll(tickets);
+     }
 }

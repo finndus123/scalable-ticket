@@ -1,4 +1,4 @@
-package de.playground.scalable_ticketing.ticket_api.service;
+package de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper;
 
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
@@ -17,17 +17,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link EventDatabaseService}.
+ * Unit tests for {@link EventResilienceDatabaseService}.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventDatabaseService")
-class EventDatabaseServiceTest {
+class EventResilienceDatabaseServiceTest {
 
     private static final String EVENT_ID = "e58ed763-928c-4155-bee9-fdbaaadc15f3";
     @Mock
     private EventRepository eventRepository;
     @InjectMocks
-    private EventDatabaseService eventDatabaseService;
+    private EventResilienceDatabaseService eventResilienceDatabaseService;
 
     @Test
     @DisplayName("returns the available ticket count when event is found")
@@ -38,7 +38,7 @@ class EventDatabaseServiceTest {
                 .thenReturn(Optional.of(expectedCount));
 
         // when
-        int actualCount = eventDatabaseService.findAvailableTickets(EVENT_ID);
+        int actualCount = eventResilienceDatabaseService.findAvailableTickets(EVENT_ID);
 
         // then
         assertThat(actualCount).isEqualTo(expectedCount);
@@ -52,7 +52,7 @@ class EventDatabaseServiceTest {
                 .thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> eventDatabaseService.findAvailableTickets(EVENT_ID))
+        assertThatThrownBy(() -> eventResilienceDatabaseService.findAvailableTickets(EVENT_ID))
                 .isInstanceOf(EventNotFoundException.class)
                 .hasMessageContaining(EVENT_ID);
     }

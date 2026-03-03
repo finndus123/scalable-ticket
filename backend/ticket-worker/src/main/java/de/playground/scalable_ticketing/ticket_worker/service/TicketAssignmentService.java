@@ -11,10 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.playground.scalable_ticketing.common.domain.model.Ticket;
-import de.playground.scalable_ticketing.common.domain.repository.TicketRepository;
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
-import io.github.resilience4j.bulkhead.annotation.Bulkhead;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceDatabaseService;
 import io.github.resilience4j.retry.annotation.Retry;
 
 /**
@@ -26,10 +24,10 @@ public class TicketAssignmentService {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketAssignmentService.class);
 
-    private final TicketRepository ticketRepository;
+    private final WorkerResilienceDatabaseService databaseService;
 
-    public TicketAssignmentService(TicketRepository ticketRepository) {
-        this.ticketRepository = ticketRepository;
+    public TicketAssignmentService(WorkerResilienceDatabaseService databaseService) {
+        this.databaseService = databaseService;
     }
 
     /**
@@ -43,11 +41,9 @@ public class TicketAssignmentService {
      * @throws OptimisticLockingFailureException if all retry attempts are exhausted
      */
     @Retry(name = "database")
-    @CircuitBreaker(name = "database")
-    @Bulkhead(name = "database")
     @Transactional
     public void assignTickets(UUID eventId, UUID orderId, int quantity) {
-        List<Ticket> availableTickets = ticketRepository.findAvailableByEventId(
+        List<Ticket> availableTickets = databaseService.findAvailableTickets(
                 eventId, PageRequest.of(0, quantity)
         );
 
@@ -58,7 +54,7 @@ public class TicketAssignmentService {
         }
 
         availableTickets.forEach(ticket -> ticket.assignToOrder(orderId));
-        ticketRepository.saveAll(availableTickets);
+        databaseService.saveAllTickets(availableTickets);
 
         logger.info("Assigned {} tickets for event {} to order {}", quantity, eventId, orderId);
     }

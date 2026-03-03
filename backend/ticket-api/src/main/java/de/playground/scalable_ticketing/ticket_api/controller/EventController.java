@@ -2,7 +2,7 @@ package de.playground.scalable_ticketing.ticket_api.controller;
 
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
-import de.playground.scalable_ticketing.ticket_api.service.EventService;
+import de.playground.scalable_ticketing.ticket_api.service.EventApiService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,10 +27,10 @@ import org.springframework.web.bind.annotation.*;
 public class EventController {
 
     private static final Logger logger = LoggerFactory.getLogger(EventController.class);
-    private final EventService eventService;
+    private final EventApiService eventApiService;
 
-    public EventController(EventService eventService) {
-        this.eventService = eventService;
+    public EventController(EventApiService eventApiService) {
+        this.eventApiService = eventApiService;
     }
 
     /**
@@ -51,7 +51,7 @@ public class EventController {
             String eventId
     ) {
         logger.info("Request to check availability for event: {}", eventId);
-        return ResponseEntity.ok(eventService.getAvailabilityCount(eventId));
+        return ResponseEntity.ok(eventApiService.getAvailabilityCount(eventId));
     }
 
     /**
@@ -76,7 +76,7 @@ public class EventController {
             TicketOrderRequest orderRequest
     ) {
         logger.info("Request to place order for event: {}, payload: {}", eventId, orderRequest);
-        eventService.createOrder(eventId, orderRequest);
+        eventApiService.createOrder(eventId, orderRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }

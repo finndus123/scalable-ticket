@@ -4,6 +4,9 @@ import de.playground.scalable_ticketing.common.dto.TicketOrderEvent;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketAvailabilityResponse;
 import de.playground.scalable_ticketing.ticket_api.dto.TicketOrderRequest;
+import de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper.EventResilienceCacheService;
+import de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper.EventResilienceDatabaseService;
+import de.playground.scalable_ticketing.ticket_api.service.resiliencewrapper.EventResilienceMessagingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,13 +24,13 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link EventService}.
+ * Unit tests for {@link EventApiService}.
  * <p>
- * All infrastructure dependencies are replaced by Mockito mocks for the delegated service classes ({@link EventCacheService}, {@link EventDatabaseService}, {@link EventMessagingService}).
+ * All infrastructure dependencies are replaced by Mockito mocks for the delegated service classes ({@link EventResilienceCacheService}, {@link EventResilienceDatabaseService}, {@link EventResilienceMessagingService}).
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventService")
-class EventServiceTest {
+class EventApiServiceTest {
 
     // -------------------------------------------------------------------------
     // Constants
@@ -42,16 +45,16 @@ class EventServiceTest {
     // -------------------------------------------------------------------------
 
     @Mock
-    private EventCacheService eventCacheService;
+    private EventResilienceCacheService eventResilienceCacheService;
 
     @Mock
-    private EventDatabaseService eventDatabaseService;
+    private EventResilienceDatabaseService eventResilienceDatabaseService;
 
     @Mock
-    private EventMessagingService eventMessagingService;
+    private EventResilienceMessagingService eventResilienceMessagingService;
 
     @InjectMocks
-    private EventService eventService;
+    private EventApiService eventApiService;
 
     // =========================================================================
     // getAvailabilityCount
@@ -66,17 +69,17 @@ class EventServiceTest {
         void shouldReturnCachedValueOnCacheHit() {
             // given
             int cachedCount = 42;
-            when(eventCacheService.getAvailabilityCountFromCache(EVENT_ID)).thenReturn(Optional.of(cachedCount));
+            when(eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID)).thenReturn(Optional.of(cachedCount));
 
             // when
-            TicketAvailabilityResponse response = eventService.getAvailabilityCount(EVENT_ID);
+            TicketAvailabilityResponse response = eventApiService.getAvailabilityCount(EVENT_ID);
 
             // then
             assertThat(response).isNotNull();
             assertThat(response.eventId()).isEqualTo(EVENT_ID);
             assertThat(response.availableTickets()).isEqualTo(cachedCount);
 
-            verify(eventDatabaseService, never()).findAvailableTickets(anyString());
+            verify(eventResilienceDatabaseService, never()).findAvailableTickets(anyString());
         }
 
         @Test
@@ -84,39 +87,39 @@ class EventServiceTest {
         void shouldFallBackToDatabaseAndPopulateCacheOnCacheMiss() {
             // given
             int dbCount = 100;
-            when(eventCacheService.getAvailabilityCountFromCache(EVENT_ID))
+            when(eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID))
                     .thenReturn(Optional.empty());
-            when(eventDatabaseService.findAvailableTickets(EVENT_ID))
+            when(eventResilienceDatabaseService.findAvailableTickets(EVENT_ID))
                     .thenReturn(dbCount);
 
             // when
-            TicketAvailabilityResponse response = eventService.getAvailabilityCount(EVENT_ID);
+            TicketAvailabilityResponse response = eventApiService.getAvailabilityCount(EVENT_ID);
 
             // then
             assertThat(response).isNotNull();
             assertThat(response.eventId()).isEqualTo(EVENT_ID);
             assertThat(response.availableTickets()).isEqualTo(dbCount);
 
-            verify(eventDatabaseService).findAvailableTickets(EVENT_ID);
-            verify(eventCacheService).writeAvailabilityCountToCache(eq(EVENT_ID), eq(dbCount));
+            verify(eventResilienceDatabaseService).findAvailableTickets(EVENT_ID);
+            verify(eventResilienceCacheService).writeAvailabilityCountToCache(eq(EVENT_ID), eq(dbCount));
         }
 
         @Test
         @DisplayName("throws EventNotFoundException when event is absent from both cache and database")
         void shouldThrowEventNotFoundExceptionWhenEventDoesNotExist() {
             // given
-            when(eventCacheService.getAvailabilityCountFromCache(EVENT_ID))
+            when(eventResilienceCacheService.getAvailabilityCountFromCache(EVENT_ID))
                     .thenReturn(Optional.empty());
-            when(eventDatabaseService.findAvailableTickets(EVENT_ID))
+            when(eventResilienceDatabaseService.findAvailableTickets(EVENT_ID))
                     .thenThrow(new EventNotFoundException(EVENT_ID));
 
             // when / then
-            assertThatThrownBy(() -> eventService.getAvailabilityCount(EVENT_ID))
+            assertThatThrownBy(() -> eventApiService.getAvailabilityCount(EVENT_ID))
                     .isInstanceOf(EventNotFoundException.class)
                     .hasMessageContaining(EVENT_ID);
 
-            verify(eventDatabaseService).findAvailableTickets(EVENT_ID);
-            verify(eventCacheService, never()).writeAvailabilityCountToCache(anyString(), anyInt());
+            verify(eventResilienceDatabaseService).findAvailableTickets(EVENT_ID);
+            verify(eventResilienceCacheService, never()).writeAvailabilityCountToCache(anyString(), anyInt());
         }
     }
 
@@ -137,10 +140,10 @@ class EventServiceTest {
             ArgumentCaptor<TicketOrderEvent> eventCaptor = ArgumentCaptor.forClass(TicketOrderEvent.class);
 
             // when
-            eventService.createOrder(EVENT_ID, request);
+            eventApiService.createOrder(EVENT_ID, request);
 
             // then
-            verify(eventMessagingService).sendOrderEvent(eventCaptor.capture());
+            verify(eventResilienceMessagingService).sendOrderEvent(eventCaptor.capture());
 
             TicketOrderEvent published = eventCaptor.getValue();
             assertThat(published.eventId()).isEqualTo(EVENT_ID);
@@ -158,10 +161,10 @@ class EventServiceTest {
             ArgumentCaptor<TicketOrderEvent> eventCaptor = ArgumentCaptor.forClass(TicketOrderEvent.class);
 
             // when
-            eventService.createOrder(EVENT_ID, request);
+            eventApiService.createOrder(EVENT_ID, request);
 
             // then
-            verify(eventMessagingService).sendOrderEvent(eventCaptor.capture());
+            verify(eventResilienceMessagingService).sendOrderEvent(eventCaptor.capture());
 
             TicketOrderEvent published = eventCaptor.getValue();
             assertThat(published.requestId()).isNull();

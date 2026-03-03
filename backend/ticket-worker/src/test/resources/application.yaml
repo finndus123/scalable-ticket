@@ -33,6 +33,7 @@ resilience4j:
         ignoreExceptions:
           - de.playground.scalable_ticketing.common.exception.EventNotFoundException
           - de.playground.scalable_ticketing.common.exception.UserNotFoundException
+          - org.springframework.dao.OptimisticLockingFailureException
 
   bulkhead:
     instances:
