@@ -190,6 +190,8 @@ GEMINI.md
 
 # Local Environment Variables
 .env
+secret.yaml
+k8s/**/secret.yaml
 
 ### Some additional ignores (sort later)
 *.DS_Store
