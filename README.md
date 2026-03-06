@@ -24,7 +24,7 @@ This project is a private playground for learning concepts and technologies for 
 
 - **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
 - **Eventual Consistency:** User requests are acknowledged immediately (HTTP 202), while the actual data consistency is ensured asynchronously by the worker.
-- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods) an event driven architecture with a message queue and resilience4j (timeouts, circuit breakers, bulkheads).
+- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods), an event-driven architecture with a message queue and Resilience4j (timeouts, circuit breakers, bulkheads).
 - **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
 
 ## Folder Structure
@@ -34,24 +34,49 @@ The backend is organized as a Maven multi-module project.
 - **backend:** Root folder for Spring Boot services.
   - **ticket-api:** REST API handling HTTP requests.
   - **ticket-worker:** Consumer for asynchronous processing.
-  - **ticket-common:** Shared library containing DTOs and utilities.
+  - **ticket-common:** Shared library containing DTOs, Repositories and utilities.
 - **k8s:** Kubernetes deployment configurations.
   - **apps:** Manifests for application services.
   - **infrastructure:** Manifests for system infrastructure.
 
-## Spring Libraries
-- TODO
-
 ## How to start locally:
 
+### Prerequisites
+- **Docker & Docker Compose**
+- **Kubectl** (for Kubernetes deployment)
+- **Local K8s Cluster** (e.g., Docker Desktop, Minikube, ...)
+- **Task** (Optional: [Installation](https://taskfile.dev/docs/installation))
+- *Optional:* **Java 21** (only for local development)
+
+### 1. Environment Setup
+Create a `.env` file from the example:
 ```bash
-    TODO
+cp .env.example .env
 ```
+> [!IMPORTANT]
+> Change the default secrets in `.env` before any non-local deployment!
+
+### 2. Execution Modes
+
+#### Option A: Local Kubernetes
+```bash
+# Generate K8s secrets from .env and deploy everything
+task k8s:deploy
+```
+
+#### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
+1. **Start Infrastructure:** Run `docker-compose up -d` to start Postgres, Redis, and RabbitMQ.
+2. **IDE Configuration:**
+   - **Active Profile:** Set `spring.profiles.active=dev`.
+   - **Environment Variables:** Load variables from `.env` (e.g., using the 'EnvFile' plugin for IntelliJ or launch.json in VS Code).
+3. **Build & Run:** 
+   ```bash
+   task build  # Or: cd backend && ./mvnw clean install
+   ```
+   Run `TicketApiApplication` or `TicketWorkerApplication` directly from your IDE.
 
 ## Planned ideas for the future:
 
-- Kubernetes Horizontal Pod Autoscaling
-- Redis & RabbitMQ Cluster
 - Deploy on Azure with CI/CD Pipeline
 - JWT Authentication
 - Simple Frontend with React

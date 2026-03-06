@@ -1,0 +1,31 @@
+version: '3'
+
+dotenv: ['.env']
+
+tasks:
+  k8s:secrets:
+    desc: "Generates the Kubernetes secret.yaml from .env passwords"
+    cmds:
+      - |
+        kubectl create secret generic ticket-system-secrets \
+        -n ticket-system \
+        --from-literal=DB_PASSWORD={{.DB_PASSWORD}} \
+        --from-literal=RABBITMQ_PASSWORD={{.RABBITMQ_PASSWORD}} \
+        --from-literal=REDIS_PASSWORD={{.REDIS_PASSWORD}} \
+        --dry-run=client -o yaml > k8s/infrastructure/secret.yaml
+    status:
+      - test -f k8s/infrastructure/secret.yaml
+
+  k8s:deploy:
+    desc: "Deploys all infrastructure and application manifests to Kubernetes"
+    deps: [k8s:secrets]
+    cmds:
+      - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/infrastructure/
+      - kubectl apply -f k8s/apps/
+
+  build:
+    desc: "Builds the backend project using Maven"
+    dir: backend
+    cmds:
+      - ./mvnw clean install
