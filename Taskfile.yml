@@ -21,8 +21,28 @@ tasks:
     deps: [k8s:secrets]
     cmds:
       - kubectl apply -f k8s/namespace.yaml
-      - kubectl apply -f k8s/infrastructure/
-      - kubectl apply -f k8s/apps/
+      - kubectl apply -R -f k8s/infrastructure/
+      - kubectl apply -R -f k8s/apps/
+
+  minikube:start:
+    desc: "Starts minikube with docker driver and enables ingress"
+    cmds:
+      - minikube start --driver=docker
+      - minikube addons enable ingress
+
+  minikube:load-images:
+    desc: "Builds and loads Docker images into minikube"
+    cmds:
+      - docker build -t ticket-api:latest -f backend/ticket-api/Dockerfile backend
+      - docker build -t ticket-worker:latest -f backend/ticket-worker/Dockerfile backend
+      - minikube image load ticket-api:latest
+      - minikube image load ticket-worker:latest
+
+  minikube:setup:
+    desc: "Complete minikube setup: start, enable ingress, and load images"
+    cmds:
+      - task: minikube:start
+      - task: minikube:load-images
 
   build:
     desc: "Builds the backend project using Maven"

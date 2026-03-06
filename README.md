@@ -44,8 +44,8 @@ The backend is organized as a Maven multi-module project.
 ### Prerequisites
 - **Docker & Docker Compose**
 - **Kubectl** (for Kubernetes deployment)
-- **Local K8s Cluster** (e.g., Docker Desktop, Minikube, ...)
-- **Task** (Optional: [Installation](https://taskfile.dev/docs/installation))
+- **Minikube** (for a local Kubernetes Cluster)
+- *Optional:* **Task** ([Installation](https://taskfile.dev/docs/installation))
 - *Optional:* **Java 21** (only for local development)
 
 ### 1. Environment Setup
@@ -59,14 +59,24 @@ cp .env.example .env
 ### 2. Execution Modes
 
 #### Option A: Local Kubernetes
-```bash
-# Generate K8s secrets from .env and deploy everything
-task k8s:deploy
-```
+
+1.  **Minikube Setup:**
+    > [!IMPORTANT]
+    > Docker must be running before starting this step!
+    ```bash
+    task minikube:setup
+    ```
+    This will start Minikube with the docker driver, enable the ingress addon, and load the backend images into the cluster.
+
+2.  **Deploy Applications:**
+    ```bash
+    # Generate K8s secrets from .env and deploy everything
+    task k8s:deploy
+    ```
 
 #### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
 1. **Start Infrastructure:** Run `docker-compose up -d` to start Postgres, Redis, and RabbitMQ.
-2. **IDE Configuration:**
+2. **IDE Run-Configuration:**
    - **Active Profile:** Set `spring.profiles.active=dev`.
    - **Environment Variables:** Load variables from `.env` (e.g., using the 'EnvFile' plugin for IntelliJ or launch.json in VS Code).
 3. **Build & Run:** 
