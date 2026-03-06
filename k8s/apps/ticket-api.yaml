@@ -78,7 +78,7 @@ metadata:
   labels:
     app: ticket-api
 spec:
-  type: LoadBalancer # Distributes external traffic across the 3 replicas
+  type: ClusterIP # Internal cluster access only; external traffic is handled via Ingress
   selector:
     app: ticket-api # Connects this service to the pods from the deployment
   ports:

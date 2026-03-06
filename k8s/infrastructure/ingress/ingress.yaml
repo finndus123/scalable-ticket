@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ticket-system-ingress
+  namespace: ticket-system
+  annotations:
+    # Standard NGINX Ingress Controller annotations
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - http:
+        paths:
+          # Routes all API traffic to the ticket-api service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: ticket-api
+                port:
+                  number: 8080
+          # Future: Grafana routing (placeholder)
+          # - path: /grafana
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: grafana
+          #       port:
+          #         number: 3000
