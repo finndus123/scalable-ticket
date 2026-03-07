@@ -45,6 +45,7 @@ The backend is organized as a Maven multi-module project.
 - **Docker & Docker Compose**
 - **Kubectl** (for Kubernetes deployment)
 - **Minikube** (for a local Kubernetes Cluster)
+- **Helm** ([Installation](https://helm.sh/docs/intro/install/))
 - *Optional:* **Task** ([Installation](https://taskfile.dev/docs/installation))
 - *Optional:* **Java 21** (only for local development)
 

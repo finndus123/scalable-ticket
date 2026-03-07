@@ -18,11 +18,35 @@ tasks:
 
   k8s:deploy:
     desc: "Deploys all infrastructure and application manifests to Kubernetes"
-    deps: [k8s:secrets]
+    deps: [k8s:secrets, k8s:infra:helm-repo]
     cmds:
+      # 1. Basic Setup
       - kubectl apply -f k8s/namespace.yaml
-      - kubectl apply -R -f k8s/infrastructure/
+      - kubectl apply -f k8s/infrastructure/secret.yaml
+      - kubectl apply -f k8s/infrastructure/configmap.yaml
+
+      # 2. Infrastructure via Helm
+      - task: k8s:infra:postgres
+
+      # 3. Manual Infrastructure (e.g. Ingress)
+      - kubectl apply -f k8s/infrastructure/ingress/ingress.yaml
+
+      # 4. Applications
       - kubectl apply -R -f k8s/apps/
+
+  k8s:infra:helm-repo:
+    desc: "Adds and updates necessary Helm repositories"
+    cmds:
+      - helm repo add bitnami https://charts.bitnami.com/bitnami
+      - helm repo update
+
+  k8s:infra:postgres:
+    desc: "Installs/Upgrades PostgreSQL via Helm using .env values"
+    cmds:
+      - |
+        helm upgrade --install postgres bitnami/postgresql \
+          -f k8s/infrastructure/postgres/values.yaml \
+          --set auth.database={{.DB_NAME}}
 
   minikube:start:
     desc: "Starts minikube with docker driver and enables ingress"
