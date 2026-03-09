@@ -2,7 +2,6 @@
 # https://artifacthub.io/packages/helm/bitnami/redis
 
 architecture: standalone
-namespaceOverride: "ticket-system"
 
 # Authentication parameters
 auth:

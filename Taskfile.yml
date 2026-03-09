@@ -13,6 +13,7 @@ tasks:
         --from-literal=DB_ADMIN_PASSWORD={{.DB_ADMIN_PASSWORD}} \
         --from-literal=RABBITMQ_PASSWORD={{.RABBITMQ_PASSWORD}} \
         --from-literal=REDIS_PASSWORD={{.REDIS_PASSWORD}} \
+        --from-literal=RABBITMQ_COOKIE={{.RABBITMQ_COOKIE}} \
         --dry-run=client -o yaml > k8s/infrastructure/secret.yaml
     status:
       - test -f k8s/infrastructure/secret.yaml
@@ -60,7 +61,6 @@ tasks:
     desc: "Adds and updates necessary Helm repositories"
     cmds:
       - helm repo add bitnami https://charts.bitnami.com/bitnami
-      - helm repo add cloudpirates https://cloudpirates.github.io/helm-charts
       - helm repo update
 
   k8s:infra:postgres:
@@ -68,6 +68,7 @@ tasks:
     cmds:
       - |
         helm upgrade --install postgres bitnami/postgresql \
+          -n ticket-system \
           -f k8s/infrastructure/postgres/values.yaml \
           --set auth.database={{.DB_NAME}} \
           --set auth.username={{.DB_USER}} \
@@ -78,6 +79,7 @@ tasks:
     cmds:
       - |
         helm upgrade --install redis bitnami/redis \
+          -n ticket-system \
           -f k8s/infrastructure/redis/values.yaml \
           --set master.service.ports.redis={{.REDIS_PORT}}
 
@@ -85,7 +87,8 @@ tasks:
     desc: "Installs/Upgrades RabbitMQ via Helm using .env values"
     cmds:
       - |
-        helm upgrade --install rabbitmq cloudpirates/rabbitmq \
+        helm upgrade --install rabbitmq oci://registry-1.docker.io/cloudpirates/rabbitmq \
+          -n ticket-system \
           -f k8s/infrastructure/rabbitmq/values.yaml \
           --set auth.username={{.RABBITMQ_USER}} \
           --set service.amqpPort={{.RABBITMQ_PORT}}

@@ -1,3 +1,7 @@
+# #############################################################################
+# Use the Taskfile command to generate a new configmap.yaml from your .env:
+# task k8s:configmap
+# #############################################################################
 apiVersion: v1
 data:
   DB_HOST: postgres
