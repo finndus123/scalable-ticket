@@ -9,6 +9,8 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       connection-timeout: 3000
+  flyway:
+    enabled: false
   # Redis Config
   data:
     redis:
@@ -74,6 +76,10 @@ rabbitmq:
   queue: ticket.order.queue
   routing:
     key: ticket.order.created
+
+# Data Seeding
+seed:
+  enabled: ${SEED_ENABLED:false}
 
 # Actuator & Prometheus
 management:

@@ -3,7 +3,29 @@ version: '3'
 dotenv: ['.env']
 
 tasks:
+  k8s:deploy:
+    desc: "Deploys all infrastructure and application manifests to Kubernetes"
+    deps: [k8s:secrets, k8s:configmap, k8s:infra:helm-repo]
+    cmds:
+      # 1. Basic Setup
+      - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/infrastructure/secret.yaml
+      - kubectl apply -f k8s/infrastructure/configmap.yaml
+
+      # 2. Infrastructure via Helm
+      - task: k8s:infra:postgres
+      - task: k8s:infra:redis
+      - task: k8s:infra:rabbitmq
+
+      # 3. Manual Infrastructure (e.g. Ingress & DB Migration)
+      - kubectl apply -f k8s/infrastructure/ingress/ingress.yaml
+      - task: k8s:infra:db-migrate
+
+      # 4. Applications
+      - kubectl apply -R -f k8s/apps/
+
   k8s:secrets:
+    internal: true
     desc: "Generates the Kubernetes secret.yaml from .env passwords"
     cmds:
       - |
@@ -19,6 +41,7 @@ tasks:
       - test -f k8s/infrastructure/secret.yaml
 
   k8s:configmap:
+    internal: true
     desc: "Generates the Kubernetes configmap.yaml from .env values"
     cmds:
       - |
@@ -37,33 +60,23 @@ tasks:
     status:
       - test -f k8s/infrastructure/configmap.yaml
 
-  k8s:deploy:
-    desc: "Deploys all infrastructure and application manifests to Kubernetes"
-    deps: [k8s:secrets, k8s:configmap, k8s:infra:helm-repo]
+  k8s:infra:db-migrate:
+    internal: true
+    desc: "Runs the database migration job"
     cmds:
-      # 1. Basic Setup
-      - kubectl apply -f k8s/namespace.yaml
-      - kubectl apply -f k8s/infrastructure/secret.yaml
-      - kubectl apply -f k8s/infrastructure/configmap.yaml
-
-      # 2. Infrastructure via Helm
-      - task: k8s:infra:postgres
-      - task: k8s:infra:redis
-      - task: k8s:infra:rabbitmq
-
-      # 3. Manual Infrastructure (e.g. Ingress)
-      - kubectl apply -f k8s/infrastructure/ingress/ingress.yaml
-
-      # 4. Applications
-      - kubectl apply -R -f k8s/apps/
+      - kubectl delete job db-migration -n ticket-system --ignore-not-found
+      - kubectl apply -f k8s/infrastructure/db-migration-job.yaml
+      - kubectl wait --for=condition=complete job/db-migration -n ticket-system --timeout=300s
 
   k8s:infra:helm-repo:
+    internal: true
     desc: "Adds and updates necessary Helm repositories"
     cmds:
       - helm repo add bitnami https://charts.bitnami.com/bitnami
       - helm repo update
 
   k8s:infra:postgres:
+    internal: true
     desc: "Installs/Upgrades PostgreSQL via Helm using .env values"
     cmds:
       - |
@@ -75,6 +88,7 @@ tasks:
           --set primary.service.ports.postgresql={{.DB_PORT}}
 
   k8s:infra:redis:
+    internal: true
     desc: "Installs/Upgrades Redis via Helm using .env values"
     cmds:
       - |
@@ -84,6 +98,7 @@ tasks:
           --set master.service.ports.redis={{.REDIS_PORT}}
 
   k8s:infra:rabbitmq:
+    internal: true
     desc: "Installs/Upgrades RabbitMQ via Helm using .env values"
     cmds:
       - |
@@ -93,25 +108,27 @@ tasks:
           --set auth.username={{.RABBITMQ_USER}} \
           --set service.amqpPort={{.RABBITMQ_PORT}}
 
+  minikube:setup:
+    desc: "Complete minikube setup: start, enable ingress, and load images"
+    cmds:
+      - task: minikube:start
+      - task: minikube:load-images
+
   minikube:start:
+    internal: true
     desc: "Starts minikube with docker driver and enables ingress"
     cmds:
       - minikube start --driver=docker
       - minikube addons enable ingress
 
   minikube:load-images:
+    internal: true
     desc: "Builds and loads Docker images into minikube"
     cmds:
       - docker build -t ticket-api:latest -f backend/ticket-api/Dockerfile backend
       - docker build -t ticket-worker:latest -f backend/ticket-worker/Dockerfile backend
       - minikube image load ticket-api:latest
       - minikube image load ticket-worker:latest
-
-  minikube:setup:
-    desc: "Complete minikube setup: start, enable ingress, and load images"
-    cmds:
-      - task: minikube:start
-      - task: minikube:load-images
 
   build:
     desc: "Builds the backend project using Maven"
