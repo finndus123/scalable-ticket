@@ -11,7 +11,7 @@ This project is a private playground for learning concepts and technologies for 
 
 ## Infrastructure components
 
-- **Ticket-API (3 Replicas):** Spring Boot Service (REST API) handling HTTP requests. Performs high-speed reads via Redis and publishes write-events to RabbitMQ.
+- **Ticket-API (2 Replicas):** Spring Boot Service (REST API) handling HTTP requests. Performs high-speed reads via Redis and publishes write-events to RabbitMQ.
 - **Ticket-Worker (2 Replicas):** Spring Boot backend consumer. Asynchronously processes orders, updates the database and invalidates the cache.
 - **Load Balancer:** Kubernetes Service distributing incoming traffic across API replicas using a Round-Robin strategy.
 - **Redis:** In-memory store used as a Look-Aside Cache (TTL: 10s) to reduce read-load on the database.
