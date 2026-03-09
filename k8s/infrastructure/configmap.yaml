@@ -11,7 +11,7 @@ data:
   RABBITMQ_HOST: rabbitmq
   RABBITMQ_PORT: "5672"
   RABBITMQ_USER: rabbituser
-  REDIS_HOST: redis
+  REDIS_HOST: redis-master
   REDIS_PORT: "6379"
 kind: ConfigMap
 metadata:

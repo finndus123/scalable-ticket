@@ -1,9 +1,6 @@
 package de.playground.scalable_ticketing.common.domain.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import java.util.UUID;
 
@@ -23,6 +20,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Enumerated(EnumType.ORDINAL)
     @Column(nullable = false)
     private NotificationType  notificationPreference;
 

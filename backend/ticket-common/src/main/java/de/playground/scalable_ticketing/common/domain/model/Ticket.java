@@ -27,6 +27,7 @@ public class Ticket {
     private UUID orderId;
 
     @Version
+    @Column(nullable = false)
     private Long version;
 
     public Ticket() {

@@ -1,8 +1,13 @@
 spring:
   jpa:
-    hibernate:
-      ddl-auto: update
     show-sql: true
+  flyway:
+    enabled: true
 
 seed:
   enabled: true
+
+# Logging
+logging:
+  level:
+    org.flywaydb: DEBUG

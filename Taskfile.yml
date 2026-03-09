@@ -24,6 +24,19 @@ tasks:
       # 4. Applications
       - kubectl apply -R -f k8s/apps/
 
+  k8s:cleanup:
+    desc: "Deletes the entire ticket-system namespace and all its resources"
+    cmds:
+      - kubectl delete namespace ticket-system --ignore-not-found
+
+  k8s:app:redeploy:
+    desc: "Rebuilds and redeploys the application code (API and Worker) via Docker build"
+    cmds:
+      - task: minikube:load-images
+      - kubectl rollout restart deployment ticket-api ticket-worker -n ticket-system
+      - kubectl rollout status deployment ticket-api -n ticket-system
+      - kubectl rollout status deployment ticket-worker -n ticket-system
+
   k8s:secrets:
     internal: true
     desc: "Generates the Kubernetes secret.yaml from .env passwords"
@@ -54,7 +67,7 @@ tasks:
         --from-literal=RABBITMQ_HOST=rabbitmq \
         --from-literal=RABBITMQ_PORT={{.RABBITMQ_PORT}} \
         --from-literal=RABBITMQ_USER={{.RABBITMQ_USER}} \
-        --from-literal=REDIS_HOST=redis \
+        --from-literal=REDIS_HOST=redis-master \
         --from-literal=REDIS_PORT={{.REDIS_PORT}} \
         --dry-run=client -o yaml > k8s/infrastructure/configmap.yaml
     status:
@@ -64,9 +77,14 @@ tasks:
     internal: true
     desc: "Runs the database migration job"
     cmds:
+      - echo "Waiting for PostgreSQL to be ready..."
+      - kubectl rollout status statefulset/postgres -n ticket-system --timeout=120s
       - kubectl delete job db-migration -n ticket-system --ignore-not-found
       - kubectl apply -f k8s/infrastructure/db-migration-job.yaml
-      - kubectl wait --for=condition=complete job/db-migration -n ticket-system --timeout=300s
+      - kubectl wait --for=condition=Ready pod -l job-name=db-migration -n ticket-system --timeout=60s
+      - kubectl logs -f job/db-migration -n ticket-system
+      # Finally check if the job was actually successful
+      - kubectl wait --for=condition=complete job/db-migration -n ticket-system --timeout=60s
 
   k8s:infra:helm-repo:
     internal: true

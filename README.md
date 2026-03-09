@@ -71,7 +71,7 @@ cp .env.example .env
 
 2.  **Deploy Applications:**
     ```bash
-    # Generate K8s secrets from .env and deploy everything
+    # Generate K8s secrets, configmap from .env and deploys infrastructure and applications in local kubernetes cluster
     task k8s:deploy
     ```
 

@@ -4,8 +4,8 @@ metadata:
   name: db-migration
   namespace: ticket-system
 spec:
-  # Automatically cleanup the job after it finishes
-  ttlSecondsAfterFinished: 100
+  # Keep the job for 10 minutes after it finishes to allow log inspection
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       containers:
@@ -17,11 +17,8 @@ spec:
               value: "true"
             - name: SEED_ENABLED
               value: "true"
-            # We override the entrypoint to just run the migrations if needed, 
-            # but Spring Boot usually runs them on startup. 
-            # To ensure the job finishes, we could use a specific profile or command.
             - name: SPRING_MAIN_WEB_APPLICATION_TYPE
-              value: "none" 
+              value: "none"
             - name: DB_HOST
               valueFrom: { configMapKeyRef: { name: ticket-system-config, key: DB_HOST } }
             - name: DB_PORT
@@ -32,5 +29,21 @@ spec:
               valueFrom: { configMapKeyRef: { name: ticket-system-config, key: DB_USER } }
             - name: DB_PASSWORD
               valueFrom: { secretKeyRef: { name: ticket-system-secrets, key: DB_PASSWORD } }
+            # Redis (required for context loading)
+            - name: REDIS_HOST
+              valueFrom: { configMapKeyRef: { name: ticket-system-config, key: REDIS_HOST } }
+            - name: REDIS_PORT
+              valueFrom: { configMapKeyRef: { name: ticket-system-config, key: REDIS_PORT } }
+            - name: REDIS_PASSWORD
+              valueFrom: { secretKeyRef: { name: ticket-system-secrets, key: REDIS_PASSWORD } }
+            # RabbitMQ (required for context loading)
+            - name: RABBITMQ_HOST
+              valueFrom: { configMapKeyRef: { name: ticket-system-config, key: RABBITMQ_HOST } }
+            - name: RABBITMQ_PORT
+              valueFrom: { configMapKeyRef: { name: ticket-system-config, key: RABBITMQ_PORT } }
+            - name: RABBITMQ_USER
+              valueFrom: { configMapKeyRef: { name: ticket-system-config, key: RABBITMQ_USER } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: ticket-system-secrets, key: RABBITMQ_PASSWORD } }
       restartPolicy: OnFailure
-  backoffLimit: 4
+  backoffLimit: 2
