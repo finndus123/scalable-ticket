@@ -75,6 +75,13 @@ cp .env.example .env
     task k8s:deploy
     ```
 
+3.  **Access the Cluster:**
+    To access the services via the Ingress (localhost), you must start the Minikube tunnel in a separate terminal:
+    ```bash
+    task minikube:tunnel
+    ```
+    **Swagger UI (K8s):** [http://localhost/api/swagger-ui/index.html](http://localhost/api/swagger-ui/index.html)
+
 #### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
 1. **Start Infrastructure:** Run `docker-compose up -d` to start Postgres, Redis, and RabbitMQ.
 2. **IDE Run-Configuration:**
@@ -85,6 +92,8 @@ cp .env.example .env
    task build  # Or: cd backend && ./mvnw clean install
    ```
    Run `TicketApiApplication` or `TicketWorkerApplication` directly from your IDE.
+
+   **Swagger UI (Local):** [http://localhost:8080/api/swagger-ui/index.html](http://localhost:8080/api/swagger-ui/index.html)
 
 ## Planned ideas for the future:
 
