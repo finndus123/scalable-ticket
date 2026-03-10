@@ -4,13 +4,13 @@ metadata:
   name: ticket-system-ingress
   namespace: ticket-system
   annotations:
-    # Standard NGINX Ingress Controller annotations
-    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "/api"
 spec:
+  ingressClassName: nginx
   rules:
     - http:
         paths:
-          # Routes all API traffic to the ticket-api service
+          # Ticket API Route
           - path: /api
             pathType: Prefix
             backend:

@@ -31,6 +31,11 @@ spring:
       receive-timeout: 3000
       reply-timeout: 3000
 
+server:
+  servlet:
+    context-path: /api
+  forward-headers-strategy: framework
+
 # Resilience4j Config
 resilience4j:
   circuitbreaker:

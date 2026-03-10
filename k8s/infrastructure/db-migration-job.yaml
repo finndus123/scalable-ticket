@@ -46,4 +46,4 @@ spec:
             - name: RABBITMQ_PASSWORD
               valueFrom: { secretKeyRef: { name: ticket-system-secrets, key: RABBITMQ_PASSWORD } }
       restartPolicy: OnFailure
-  backoffLimit: 2
+  backoffLimit: 3

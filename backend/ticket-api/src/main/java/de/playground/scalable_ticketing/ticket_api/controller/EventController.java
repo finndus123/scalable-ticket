@@ -21,7 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/events")
+@RequestMapping("/events")
 @Validated
 @Tag(name = "Events", description = "Endpoints for querying ticket availability and placing ticket orders for events")
 public class EventController {
