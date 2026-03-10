@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.amqp.autoconfigure.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,19 +41,47 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Explicitly declare the durable Queue to ensure the topology exists.
+     * Explicitly declare the Dead Letter Exchange (DLX).
      */
     @Bean
-    public Queue queue() {
-        return new Queue(queue, true);
+    public TopicExchange deadLetterExchange() {
+        return new TopicExchange(exchange + ".dlx");
     }
 
     /**
-     * Explicitly declare the Binding to ensure the topology exists.
+     * Explicitly declare the durable Queue to ensure the topology exists.
+     * Configured with a Dead Letter Exchange to handle failed messages.
+     */
+    @Bean
+    public Queue queue() {
+        return org.springframework.amqp.core.QueueBuilder.durable(queue)
+                .withArgument("x-dead-letter-exchange", exchange + ".dlx")
+                .withArgument("x-dead-letter-routing-key", "dead-letter")
+                .build();
+    }
+
+    /**
+     * Explicitly declare the Dead Letter Queue (DLQ).
+     */
+    @Bean
+    public Queue deadLetterQueue() {
+        return new Queue(queue + ".dlq", true);
+    }
+
+    /**
+     * Explicitly declare the Binding for the main queue.
      */
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    }
+
+    /**
+     * Explicitly declare the Binding for the DLQ.
+     */
+    @Bean
+    public Binding deadLetterBinding() {
+        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with("#");
     }
 
     /**
@@ -64,13 +93,19 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Configures the listener container factory.
-     * Sets the prefetch count to prevent workers from hoarding unacknowledged messages.
+     * Creates the SimpleRabbitListenerContainerFactory for receiving messages.
+     * Configured with the JSON message converter and application.yaml properties (like retries).
+     *
+     * @param connectionFactory The ConnectionFactory to use.
+     * @param configurer for setting configuration properties.
+     * @return The configured SimpleRabbitListenerContainerFactory.
      */
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            SimpleRabbitListenerContainerFactoryConfigurer configurer) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
+        configurer.configure(factory, connectionFactory);
         factory.setMessageConverter(jsonMessageConverter());
         factory.setPrefetchCount(prefetchCount);
         return factory;

@@ -39,14 +39,33 @@ public class RabbitMQConfig {
     }
 
     /**
+     * Explicitly declare the Dead Letter Exchange (DLX).
+     */
+    @Bean
+    public TopicExchange deadLetterExchange() {
+        return new TopicExchange(exchange + ".dlx");
+    }
+
+    /**
      * Creates the durable Queue for ticket orders.
+     * Configured with a Dead Letter Exchange to handle failed messages.
      *
      * @return The configured Queue.
      */
     @Bean
     public Queue queue() {
-        // durable true -> queue survives broker restart
-        return new Queue(queue, true);
+        return org.springframework.amqp.core.QueueBuilder.durable(queue)
+                .withArgument("x-dead-letter-exchange", exchange + ".dlx")
+                .withArgument("x-dead-letter-routing-key", "dead-letter")
+                .build();
+    }
+
+    /**
+     * Explicitly declare the Dead Letter Queue (DLQ).
+     */
+    @Bean
+    public Queue deadLetterQueue() {
+        return new Queue(queue + ".dlq", true);
     }
 
     /**
@@ -59,6 +78,14 @@ public class RabbitMQConfig {
     @Bean
     public Binding binding(Queue queue, TopicExchange exchange) {
         return BindingBuilder.bind(queue).to(exchange).with(routingKey);
+    }
+
+    /**
+     * Explicitly declare the Binding for the DLQ.
+     */
+    @Bean
+    public Binding deadLetterBinding() {
+        return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange()).with("#");
     }
 
     /**

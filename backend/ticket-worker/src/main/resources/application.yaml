@@ -22,6 +22,15 @@ spring:
     port: ${RABBITMQ_PORT}
     username: ${RABBITMQ_USER}
     password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          multiplier: 2.0
+          max-interval: 10000ms
+          max-retries: 3
+        default-requeue-rejected: false
 
 # Resilience4j Config
 resilience4j:
