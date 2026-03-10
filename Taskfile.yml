@@ -16,6 +16,7 @@ tasks:
       - task: k8s:infra:postgres
       - task: k8s:infra:redis
       - task: k8s:infra:rabbitmq
+      - task: k8s:infra:prometheus
 
       # 3. Manual Infrastructure (e.g. Ingress & DB Migration)
       - kubectl apply -f k8s/infrastructure/ingress/ingress.yaml
@@ -125,6 +126,15 @@ tasks:
           -f k8s/infrastructure/rabbitmq/values.yaml \
           --set auth.username={{.RABBITMQ_USER}} \
           --set service.amqpPort={{.RABBITMQ_PORT}}
+
+  k8s:infra:prometheus:
+    internal: true
+    desc: "Installs/Upgrades Prometheus via Helm"
+    cmds:
+      - |
+        helm upgrade --install prometheus oci://ghcr.io/prometheus-community/charts/prometheus \
+          -n ticket-system \
+          -f k8s/infrastructure/prometheus/values.yaml
 
   minikube:setup:
     desc: "Complete minikube setup: start, enable ingress, and load images"

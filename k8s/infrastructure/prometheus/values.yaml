@@ -1,0 +1,24 @@
+# Prometheus Helm Chart Values
+# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus
+
+# Disable components to save resources in local minikube
+alertmanager:
+  enabled: false
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  fullnameOverride: "prometheus"
+  replicaCount: 1
+  # Store metrics for only 1 day to save disk space
+  retention: 1d
+  persistentVolume:
+    enabled: true
+    storageClass: "standard"
+    size: 2Gi
+
+  # The default configuration already scrapes pods with annotations:
+  # prometheus.io/scrape: "true"
+  # prometheus.io/path: "/actuator/prometheus"
+  # prometheus.io/port: "8080"

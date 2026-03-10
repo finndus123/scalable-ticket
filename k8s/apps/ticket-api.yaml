@@ -18,7 +18,8 @@ spec:
         # Allows Prometheus to scrape metrics from this pod
         prometheus.io/scrape: "true"
         prometheus.io/port: "8080"
-        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/path: "/api/actuator/prometheus"
+
     spec:
       containers:
         - name: ticket-api
