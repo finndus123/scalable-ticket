@@ -46,11 +46,11 @@ public class DataLoader implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
         if (userRepository.count() == 0 && eventRepository.count() == 0 && ticketRepository.count() == 0) {
-            User homer = new User(UUID.randomUUID(), "Homer Simpson", "homer.simpson@nuclear.com");
-            User mrBurns = new User(UUID.randomUUID(), "Montgomery Burns", "mr.burns@nuclear.com");
+            User homer = new User(UUID.fromString("7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a"), "Homer Simpson", "homer.simpson@nuclear.com");
+            User mrBurns = new User(UUID.fromString("b1c2d3e4-f5a6-7b8c-9d0e-1f2a3b4c5d6e"), "Montgomery Burns", "mr.burns@nuclear.com");
             userRepository.saveAll(List.of(mrBurns, homer));
 
-            UUID krustyShowId = UUID.randomUUID();
+            UUID krustyShowId = UUID.fromString("e58ed763-928c-4155-bee9-fdbaaadc15f3");
             Event krustyShow = new Event(krustyShowId, "Krusty the Clown Show", "Channel 6 Studios", 50000, 50000, BigDecimal.valueOf(15.00));
             eventRepository.save(krustyShow);
 
