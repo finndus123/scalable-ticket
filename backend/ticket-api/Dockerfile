@@ -28,5 +28,5 @@ USER spring:spring
 # Copy the executable jar from the build stage
 COPY --from=build /app/ticket-api/target/ticket-api-*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8080 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
