@@ -5,6 +5,5 @@ package de.playground.scalable_ticketing.common.domain.model;
  */
 public enum TicketStatus {
     AVAILABLE,
-    RESERVED,
     SOLD
 }
