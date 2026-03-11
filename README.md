@@ -81,6 +81,7 @@ cp .env.example .env
     task minikube:tunnel
     ```
     **Swagger UI (K8s):** [http://localhost/api/swagger-ui/index.html](http://localhost/api/swagger-ui/index.html)
+    **Grafana (K8s):** [http://localhost/grafana/](http://localhost/grafana/)
 
 #### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
 1. **Start Infrastructure:** Run `docker-compose up -d` to start Postgres, Redis, and RabbitMQ.
@@ -97,7 +98,9 @@ cp .env.example .env
 
 ## Planned ideas for the future:
 
+- Use Grafana Loki for Logs
+- Collect and Visualize Traces with Grafana Alloy
+- Auth-Microservice with JWT-Authentication
 - Deploy on Azure with CI/CD Pipeline
-- JWT Authentication
 - Simple Frontend with React
 

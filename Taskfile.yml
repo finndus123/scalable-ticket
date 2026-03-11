@@ -17,6 +17,7 @@ tasks:
       - task: k8s:infra:redis
       - task: k8s:infra:rabbitmq
       - task: k8s:infra:prometheus
+      - task: k8s:infra:grafana
 
       # 3. Manual Infrastructure (e.g. Ingress & DB Migration)
       - kubectl apply -f k8s/infrastructure/ingress/ingress.yaml
@@ -39,7 +40,6 @@ tasks:
       - kubectl rollout status deployment ticket-worker -n ticket-system
 
   k8s:secrets:
-    internal: true
     desc: "Generates the Kubernetes secret.yaml from .env passwords"
     cmds:
       - |
@@ -50,12 +50,13 @@ tasks:
         --from-literal=RABBITMQ_PASSWORD={{.RABBITMQ_PASSWORD}} \
         --from-literal=REDIS_PASSWORD={{.REDIS_PASSWORD}} \
         --from-literal=RABBITMQ_COOKIE={{.RABBITMQ_COOKIE}} \
+        --from-literal=GRAFANA_ADMIN_USER={{.GRAFANA_ADMIN_USER}} \
+        --from-literal=GRAFANA_ADMIN_PASSWORD={{.GRAFANA_ADMIN_PASSWORD}} \
         --dry-run=client -o yaml > k8s/infrastructure/secret.yaml
     status:
       - test -f k8s/infrastructure/secret.yaml
 
   k8s:configmap:
-    internal: true
     desc: "Generates the Kubernetes configmap.yaml from .env values"
     cmds:
       - |
@@ -135,6 +136,15 @@ tasks:
         helm upgrade --install prometheus oci://ghcr.io/prometheus-community/charts/prometheus \
           -n ticket-system \
           -f k8s/infrastructure/prometheus/values.yaml
+
+  k8s:infra:grafana:
+    internal: true
+    desc: "Installs/Upgrades Grafana via Helm"
+    cmds:
+      - |
+        helm upgrade --install grafana oci://ghcr.io/grafana-community/helm-charts/grafana \
+          -n ticket-system \
+          -f k8s/infrastructure/grafana/values.yaml
 
   minikube:setup:
     desc: "Complete minikube setup: start, enable ingress, and load images"

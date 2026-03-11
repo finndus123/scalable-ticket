@@ -1,5 +1,5 @@
 # Prometheus Helm Chart Values
-# https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus
+# https://artifacthub.io/packages/helm/prometheus-community/prometheus
 
 # Disable components to save resources in local minikube
 alertmanager:

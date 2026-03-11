@@ -1,0 +1,63 @@
+# Grafana Community Helm Chart Values
+# oci://ghcr.io/grafana-community/helm-charts/grafana
+
+fullnameOverride: "grafana"
+
+env:
+  GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+  GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+
+envValueFrom:
+  # Database Credentials for Datasource
+  DB_HOST:
+    configMapKeyRef:
+      name: ticket-system-config
+      key: DB_HOST
+  DB_PORT:
+    configMapKeyRef:
+      name: ticket-system-config
+      key: DB_PORT
+  DB_NAME:
+    configMapKeyRef:
+      name: ticket-system-config
+      key: DB_NAME
+  DB_USER:
+    configMapKeyRef:
+      name: ticket-system-config
+      key: DB_USER
+  DB_PASSWORD:
+    secretKeyRef:
+      name: ticket-system-secrets
+      key: DB_PASSWORD
+
+# Admin credentials managed by the chart to avoid duplication
+admin:
+  existingSecret: "ticket-system-secrets"
+  userKey: "GRAFANA_ADMIN_USER"
+  passwordKey: "GRAFANA_ADMIN_PASSWORD"
+
+# Datasources configuration
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus:80
+        access: proxy
+        isDefault: true
+      - name: PostgreSQL
+        type: postgres
+        url: ${DB_HOST}:${DB_PORT}
+        database: ${DB_NAME}
+        user: ${DB_USER}
+        secureJsonData:
+          password: ${DB_PASSWORD}
+        jsonData:
+          sslmode: "disable" # For local development
+          database: ${DB_NAME}
+
+# Persistence
+persistence:
+  enabled: true
+  size: 1Gi

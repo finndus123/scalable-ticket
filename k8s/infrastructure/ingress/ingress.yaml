@@ -18,11 +18,11 @@ spec:
                 name: ticket-api
                 port:
                   number: 8080
-          # Future: Grafana routing (placeholder)
-          # - path: /grafana
-          #   pathType: Prefix
-          #   backend:
-          #     service:
-          #       name: grafana
-          #       port:
-          #         number: 3000
+          # Grafana routing
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 80
