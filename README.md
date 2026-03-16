@@ -1,8 +1,20 @@
 # Scalable Ticket System
 
-This project is a private playground for learning concepts and technologies for high-available distributed systems. It implements a cloud-native ticketing system designed to handle extreme traffic spikes through distributed processing and caching.
+This project is a private playground for learning concepts and technologies for high-available distributed systems.
+
+## Learning Goals
+
+Things i wanted to learn and try out in this project:
+- Container orchestration with **Kubernetes**
+- Caching with **Redis**
+- Asynchronous messaging with **RabbitMQ**
+- Resilience patterns with **Resilience4j**
+- Load testing with **K6**
+- Basic Observability with **Prometheus and Grafana**
+- Building a multi module project with build tools like **Maven** & defining deployment workflows using a **Taskfile**
 
 ## Fictional Use Cases
+The project implements a cloud-native ticketing system:
 
 1. **Check ticket availability (High Frequency Read)**
 2. **Buy tickets (High Concurrency Write)**
@@ -13,25 +25,22 @@ This project is a private playground for learning concepts and technologies for 
 
 - **Ticket-API (2 Replicas):** Spring Boot Service (REST API) handling HTTP requests. Performs high-speed reads via Redis and publishes write-events to RabbitMQ.
 - **Ticket-Worker (2 Replicas):** Spring Boot backend consumer. Asynchronously processes orders, updates the database and invalidates the cache.
-- **Load Balancer:** Kubernetes Service distributing incoming traffic across API replicas using a Round-Robin strategy.
-- **Redis:** In-memory store used as a Look-Aside Cache (TTL: 10s) to reduce read-load on the database.
+- **Ingress:** Ingress Nginx Controller providing a centralized entry point to the Ticket-API and Grafana-Dashboard.
+- **Redis:** In-memory store used as a Look-Aside Cache to reduce read-load on the database.
 - **PostgreSQL:** Primary relational database for persistent storage of ticket inventory and order transactions.
 - **RabbitMQ:** Message broker that buffers high-concurrency write requests.
 - **Prometheus:** Scrapes metrics from application endpoints via Spring Boot Actuator.
-- **Grafana:** Visualization layer connected to Prometheus to monitor system health and bottlenecks in real-time.
+- **Grafana:** Visualization connected to Prometheus to monitor system health.
 
 ## Key Architectural Decisions
 
 - **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
-- **Eventual Consistency:** User requests are acknowledged immediately (HTTP 202), while the actual data consistency is ensured asynchronously by the worker.
-- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing (automatic restart of failed pods), an event-driven architecture with a message queue and Resilience4j (timeouts, circuit breakers, bulkheads).
+- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing, an event-driven architecture with a message queue and Resilience4j (timeouts, circuit breakers, bulkheads).
 - **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
 
 ## Folder Structure
 
-The backend is organized as a Maven multi-module project.
-
-- **backend:** Root folder for Spring Boot services.
+- **backend:** Root folder for Spring Boot services (multi-module project)
   - **ticket-api:** REST API handling HTTP requests.
   - **ticket-worker:** Consumer for asynchronous processing.
   - **ticket-common:** Shared library containing DTOs, Repositories and utilities.
@@ -39,15 +48,17 @@ The backend is organized as a Maven multi-module project.
   - **apps:** Manifests for application services.
   - **infrastructure:** Manifests for system infrastructure.
 
+---
+
 ## How to start locally:
 
-### Prerequisites
-- **Docker & Docker Compose**
-- **Kubectl** (for Kubernetes deployment)
-- **Minikube** (for a local Kubernetes Cluster)
+### Prerequisites 
+- **JDK 21** ([Installation](https://www.oracle.com/de/java/technologies/downloads/#java21))
+- **Docker** ([Installation](https://www.docker.com/products/docker-desktop/))
+- **Kubectl** ([Installation](https://kubernetes.io/docs/tasks/tools/))
+- **Minikube** ([Installation](https://minikube.sigs.k8s.io/docs/start/))
 - **Helm** ([Installation](https://helm.sh/docs/intro/install/))
-- *Optional:* **Task** ([Installation](https://taskfile.dev/docs/installation))
-- *Optional:* **Java 21** (only for local development)
+- **Task** ([Installation](https://taskfile.dev/docs/installation))
 
 ### 1. Environment Setup
 Create a `.env` file from the example:
@@ -62,7 +73,7 @@ cp .env.example .env
 #### Option A: Local Kubernetes
 
 1.  **Minikube Setup:**
-    > [!IMPORTANT]
+  
     > Docker must be running before starting this step!
     ```bash
     task minikube:setup
@@ -80,7 +91,7 @@ cp .env.example .env
     ```bash
     task minikube:tunnel
     ```
-    **Swagger UI (K8s):** [http://localhost/api/swagger-ui/index.html](http://localhost/api/swagger-ui/index.html)
+    **Swagger UI (K8s):** [http://localhost/api/swagger-ui/index.html](http://localhost/api/swagger-ui/index.html) \
     **Grafana (K8s):** [http://localhost/grafana/](http://localhost/grafana/)
 
 #### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
@@ -100,7 +111,7 @@ cp .env.example .env
 
 - Use Grafana Loki for Logs
 - Collect and Visualize Traces with Grafana Alloy
-- Auth-Microservice with JWT-Authentication
+- Auth-Microservice with JWT-Authentication 
 - Deploy on Azure with CI/CD Pipeline
 - Simple Frontend with React
 
