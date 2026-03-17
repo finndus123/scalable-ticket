@@ -25,5 +25,19 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
      */
     @Query("SELECT t FROM Ticket t WHERE t.eventId = :eventId AND t.status = 'AVAILABLE' ORDER BY t.id")
     List<Ticket> findAvailableByEventId(@Param("eventId") UUID eventId, Pageable pageable);
+
+    /**
+     * Locks only currently free ticket rows and skips rows already locked by another transaction.
+     */
+    @Query(value = """
+            SELECT *
+            FROM tickets t
+            WHERE t.event_id = :eventId
+              AND t.status = 'AVAILABLE'
+            ORDER BY t.id
+            LIMIT :quantity
+            FOR UPDATE SKIP LOCKED
+            """, nativeQuery = true)
+    List<Ticket> findAvailableByEventIdForUpdate(@Param("eventId") UUID eventId, @Param("quantity") int quantity);
 }
 

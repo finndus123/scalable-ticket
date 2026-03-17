@@ -105,7 +105,6 @@ class EventWorkerServiceTest {
 
         // Verify assignment and cache invalidation
         verify(ticketAssignmentService).assignTickets(sampleEvent.getId(), sampleOrder.getId(), sampleOrderEvent.quantity());
-        verify(databaseService).saveEvent(sampleEvent);
         verify(cacheService).invalidateAvailabilityCache(sampleOrderEvent.eventId());
 
         // Verify final order state

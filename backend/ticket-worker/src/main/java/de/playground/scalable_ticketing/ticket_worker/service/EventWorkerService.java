@@ -47,8 +47,8 @@ public class EventWorkerService {
      *   <ol>
      *     <li>Validate user and event existence</li>
      *     <li>Create a PENDING order</li>
-     *     <li>Assign tickets via {@link TicketAssignmentService} </li>
-     *     <li>Decrement event availability and invalidate Redis cache</li>
+     *     <li>Assign tickets and decrement availability via {@link TicketAssignmentService}</li>
+     *     <li>Invalidate Redis cache</li>
      *     <li>Mark order as COMPLETED or FAILED and notify the user</li>
      *   </ol>
      *
@@ -79,9 +79,6 @@ public class EventWorkerService {
             ticketAssignmentService.assignTickets(
                     event.getId(), order.getId(), ticketOrder.quantity()
             );
-
-            event.decrementAvailableTickets(ticketOrder.quantity());
-            databaseService.saveEvent(event);
 
             cacheService.invalidateAvailabilityCache(ticketOrder.eventId());
 

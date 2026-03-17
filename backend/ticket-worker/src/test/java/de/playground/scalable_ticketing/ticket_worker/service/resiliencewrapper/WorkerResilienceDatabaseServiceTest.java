@@ -2,9 +2,12 @@ package de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper
 
 import de.playground.scalable_ticketing.common.domain.model.Event;
 import de.playground.scalable_ticketing.common.domain.model.Order;
+import de.playground.scalable_ticketing.common.domain.model.Ticket;
+import de.playground.scalable_ticketing.common.domain.model.TicketStatus;
 import de.playground.scalable_ticketing.common.domain.model.User;
 import de.playground.scalable_ticketing.common.domain.repository.EventRepository;
 import de.playground.scalable_ticketing.common.domain.repository.OrderRepository;
+import de.playground.scalable_ticketing.common.domain.repository.TicketRepository;
 import de.playground.scalable_ticketing.common.domain.repository.UserRepository;
 import de.playground.scalable_ticketing.common.exception.EventNotFoundException;
 import de.playground.scalable_ticketing.common.exception.UserNotFoundException;
@@ -18,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +43,9 @@ class WorkerResilienceDatabaseServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
+
+    @Mock
+    private TicketRepository ticketRepository;
 
     @InjectMocks
     private WorkerResilienceDatabaseService workerResilienceDatabaseService;
@@ -107,6 +114,18 @@ class WorkerResilienceDatabaseServiceTest {
     }
 
     @Test
+    @DisplayName("Should return Event with write lock if exists")
+    void shouldReturnEventForUpdateIfExists() {
+        Event expectedEvent = new Event(eventId, "Concert", "Location", 100, 100, BigDecimal.TEN);
+        when(eventRepository.findByIdForUpdate(eventId)).thenReturn(Optional.of(expectedEvent));
+
+        Event actualEvent = workerResilienceDatabaseService.getEventForUpdateOrThrow(eventId);
+
+        assertThat(actualEvent).isEqualTo(expectedEvent);
+        verify(eventRepository).findByIdForUpdate(eventId);
+    }
+
+    @Test
     @DisplayName("Should correctly save an Order")
     void shouldSaveOrder() {
         // Arrange
@@ -134,5 +153,17 @@ class WorkerResilienceDatabaseServiceTest {
         // Assert
         assertThat(savedEvent).isEqualTo(event);
         verify(eventRepository).save(event);
+    }
+
+    @Test
+    @DisplayName("Should return locked available tickets")
+    void shouldReturnLockedAvailableTickets() {
+        Ticket ticket = new Ticket(UUID.randomUUID(), eventId, TicketStatus.AVAILABLE);
+        when(ticketRepository.findAvailableByEventIdForUpdate(eventId, 2)).thenReturn(List.of(ticket));
+
+        List<Ticket> tickets = workerResilienceDatabaseService.findAvailableTicketsForUpdate(eventId, 2);
+
+        assertThat(tickets).containsExactly(ticket);
+        verify(ticketRepository).findAvailableByEventIdForUpdate(eventId, 2);
     }
 }

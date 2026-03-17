@@ -11,7 +11,7 @@ import jakarta.validation.constraints.NotNull;
 @Schema(description = "Request payload for placing a ticket order")
 public record TicketOrderRequest(
 
-        @Schema(description = "Unique identifier of the user placing the order", example = "e58ed763-928c-4155-bee9-fdbaaadc15f3")
+        @Schema(description = "Unique identifier of the user placing the order", example = "7d9f2e1a-4b3c-4d5e-8f6a-9b0c1d2e3f4a")
         @NotBlank(message = "User ID is required")
         String userId,
 

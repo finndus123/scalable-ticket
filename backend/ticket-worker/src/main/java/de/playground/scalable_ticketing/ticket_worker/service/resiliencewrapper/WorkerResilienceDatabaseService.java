@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -68,6 +67,16 @@ public class WorkerResilienceDatabaseService {
 
     @CircuitBreaker(name = "database")
     @Bulkhead(name = "database")
+    public Event getEventForUpdateOrThrow(UUID eventId) {
+        return eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> {
+                    logger.error("Event not found with id {}", eventId);
+                    return new EventNotFoundException(eventId.toString());
+                });
+    }
+
+    @CircuitBreaker(name = "database")
+    @Bulkhead(name = "database")
     public Order saveOrder(Order order) {
         return orderRepository.save(order);
     }
@@ -80,8 +89,8 @@ public class WorkerResilienceDatabaseService {
 
     @CircuitBreaker(name = "database")
     @Bulkhead(name = "database")
-    public List<Ticket> findAvailableTickets(UUID eventId, Pageable pageable) {
-        return ticketRepository.findAvailableByEventId(eventId, pageable);
+    public List<Ticket> findAvailableTicketsForUpdate(UUID eventId, int quantity) {
+        return ticketRepository.findAvailableByEventIdForUpdate(eventId, quantity);
     }
 
      @CircuitBreaker(name = "database")

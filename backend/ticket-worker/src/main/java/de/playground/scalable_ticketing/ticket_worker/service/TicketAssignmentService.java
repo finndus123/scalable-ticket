@@ -6,10 +6,10 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.playground.scalable_ticketing.common.domain.model.Event;
 import de.playground.scalable_ticketing.common.domain.model.Ticket;
 import de.playground.scalable_ticketing.common.exception.InsufficientTicketsException;
 import de.playground.scalable_ticketing.ticket_worker.service.resiliencewrapper.WorkerResilienceDatabaseService;
@@ -43,9 +43,8 @@ public class TicketAssignmentService {
     @Retry(name = "database")
     @Transactional
     public void assignTickets(UUID eventId, UUID orderId, int quantity) {
-        List<Ticket> availableTickets = databaseService.findAvailableTickets(
-                eventId, PageRequest.of(0, quantity)
-        );
+        Event event = databaseService.getEventForUpdateOrThrow(eventId);
+        List<Ticket> availableTickets = databaseService.findAvailableTicketsForUpdate(eventId, quantity);
 
         if (availableTickets.size() < quantity) {
             throw new InsufficientTicketsException(
@@ -53,6 +52,7 @@ public class TicketAssignmentService {
             );
         }
 
+        event.decrementAvailableTickets(quantity);
         availableTickets.forEach(ticket -> ticket.assignToOrder(orderId));
         databaseService.saveAllTickets(availableTickets);
 
