@@ -101,7 +101,6 @@ cp .env.example .env
     ```bash
     task loadtest
     ```
-    > [!NOTE]
     > If the load test starts failing even though node utilization is still low, the issue may be caused by the local `minikube tunnel` or ingress. \
     > As a comparison test, you can bypass the ingress and tunnel with:
     > ```bash
