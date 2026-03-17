@@ -20,6 +20,7 @@ The project implements a cloud-native ticketing system:
 2. **Buy tickets (High Concurrency Write)**
 
 ![System Overview of the Scalable Ticket System](scalable-ticket-system-overview.png)
+![Grafana Dashboard of Scalable Ticket System](ticket-system-dashboard.png)
 
 ## Infrastructure components
 
@@ -59,6 +60,7 @@ The project implements a cloud-native ticketing system:
 - **Minikube** ([Installation](https://minikube.sigs.k8s.io/docs/start/))
 - **Helm** ([Installation](https://helm.sh/docs/intro/install/))
 - **Task** ([Installation](https://taskfile.dev/docs/installation))
+- **K6** ([Installation](https://grafana.com/docs/k6/latest/set-up/install-k6/))
 
 ### 1. Environment Setup
 Create a `.env` file from the example:
@@ -94,6 +96,19 @@ cp .env.example .env
     **Swagger UI (K8s):** [http://localhost/api/swagger-ui/index.html](http://localhost/api/swagger-ui/index.html) \
     **Grafana (K8s):** [http://localhost/grafana/](http://localhost/grafana/)
 
+4.  **Optional: Run the Load Test**
+    Start the load test against the local Kubernetes ingress after the cluster is up and the Minikube tunnel is running:
+    ```bash
+    task loadtest
+    ```
+    > [!NOTE]
+    > If the load test starts failing even though node utilization is still low, the issue may be caused by the local `minikube tunnel` or ingress. \
+    > As a comparison test, you can bypass the ingress and tunnel with:
+    > ```bash
+    > kubectl port-forward svc/ticket-api 8080:8080 -n ticket-system
+    > ```
+    > Then point the load test (/load-testing/load-test.js) against `http://127.0.0.1:8080/api` instead of `http://localhost/api`.
+
 #### Option B: Local Development (IDE + Docker Single Instance Infrastructure)
 1. **Start Infrastructure:** Run `docker-compose up -d` to start Postgres, Redis, and RabbitMQ.
 2. **IDE Run-Configuration:**
@@ -114,4 +129,3 @@ cp .env.example .env
 - Auth-Microservice with JWT-Authentication 
 - Deploy on Azure with CI/CD Pipeline
 - Simple Frontend with React
-

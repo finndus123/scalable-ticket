@@ -35,6 +35,7 @@ tasks:
     desc: "Rebuilds and redeploys the application code (API and Worker) via Docker build"
     cmds:
       - task: minikube:load-images
+      - task: k8s:infra:db-migrate
       - kubectl rollout restart deployment ticket-api ticket-worker -n ticket-system
       - kubectl rollout status deployment ticket-api -n ticket-system
       - kubectl rollout status deployment ticket-worker -n ticket-system
@@ -172,6 +173,11 @@ tasks:
       - docker build -t ticket-worker:latest -f backend/ticket-worker/Dockerfile backend
       - minikube image load ticket-api:latest
       - minikube image load ticket-worker:latest
+
+  loadtest:
+    desc: "Runs the K6 load test against the local API ingress"
+    cmds:
+      - k6 run load-testing/load-test.js
 
   build:
     desc: "Builds the backend project using Maven"
