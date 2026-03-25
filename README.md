@@ -35,9 +35,11 @@ The project implements a cloud-native ticketing system:
 
 ## Key Architectural Decisions
 
-- **Command Query Responsibility Segregation (CQRS):** Separation of read operations (API + Cache) and write operations (Worker + DB) to optimize for different load profiles.
-- **Resilience & Scalability & Asynchronous Decoupling:** Through replication, load balancing, self-healing, an event-driven architecture with a message queue and Resilience4j (timeouts, circuit breakers, bulkheads).
-- **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure high code reusability, modular interchangeability and maintainability.
+- **Cache-Aside Strategy:** Read-heavy operations are accelerated through Redis caching. On cache miss, data is loaded from the database and cached. Updates trigger cache invalidation.
+- **Asynchronous Processing & Decoupling:** Write-intensive and time-consuming operations are offloaded from the API to background workers via RabbitMQ, enabling non-blocking request handling, faster response times, and loose coupling between system components.
+- **Centralized Persistence Model:** PostgreSQL is used as a single source of truth shared across Ticket-Worker and Ticket-API, simplifying data consistency and persistence management. While this approach **deviates from microservice best practices** of database per service, it was intentionally chosen to reduce complexity and coordination overhead.
+- **Resilience & Scalability:** Through replication, load balancing, self-healing and Resilience4j (timeouts, circuit breakers, bulkheads).
+- **Object-Oriented Programming (OOP) & Domain-Driven Design (DDD):** Implementation of domain-centric logic and OOP principles to ensure reusability, modular interchangeability and maintainability.
 
 ## Folder Structure
 
